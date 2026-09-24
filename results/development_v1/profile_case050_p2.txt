@@ -1,0 +1,43 @@
+         54741560 function calls (53625374 primitive calls) in 12.503 seconds
+
+   Ordered by: cumulative time
+   List reduced from 530 to 35 due to restriction <35>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.000    0.000   12.301   12.301 vns.py:19(solve)
+        6    0.008    0.001   12.145    2.024 vns.py:36(consider)
+        6    0.000    0.000   11.968    1.995 official_adapter.py:58(evaluate)
+        6    0.050    0.008   11.947    1.991 official_adapter.py:47(raw)
+        6    0.168    0.028   11.896    1.983 multicore_cut_evaluate_problem_2.py:284(evaluate_scene_b)
+        6    0.222    0.037   10.686    1.781 multicore_cut_evaluate_problem_2.py:61(_build_scene_b_tasks)
+       24    0.043    0.002    8.215    0.342 schedule_step3.py:675(prepare_step3_execution)
+       24    3.277    0.137    7.993    0.333 schedule_step3.py:94(step3_simulation)
+ 36956010    2.141    0.000    2.141    0.000 schedule_step3.py:563(<genexpr>)
+    31467    0.251    0.000    0.892    0.000 schedule_step3.py:458(issue_step)
+      102    0.532    0.005    0.679    0.007 schedule_step3.py:39(_build_graph_views)
+968594/24    0.226    0.000    0.673    0.028 copy.py:110(deepcopy)
+147474/24    0.235    0.000    0.673    0.028 copy.py:198(_deepcopy_dict)
+       96    0.053    0.001    0.672    0.007 copy.py:172(_deepcopy_list)
+       18    0.292    0.016    0.542    0.030 schedule_step2.py:101(step2_spill_insertion)
+        6    0.038    0.006    0.540    0.090 stub_multicore_cut_and_schedule.py:114(derive_multicore_plan)
+       18    0.002    0.000    0.495    0.028 schedule_step1.py:187(step1_schedule)
+    31491    0.130    0.000    0.493    0.000 schedule_step3.py:430(retire_step)
+    31139    0.190    0.000    0.470    0.000 multicore_cut_evaluate_problem_2.py:425(retire)
+    31139    0.280    0.000    0.428    0.000 multicore_cut_evaluate_problem_2.py:455(issue)
+       18    0.051    0.003    0.403    0.022 schedule_step1.py:104(step1_from_adj)
+        7    0.197    0.028    0.388    0.055 evaluation_validation.py:171(validate_graph)
+       18    0.253    0.014    0.323    0.018 schedule_step1.py:33(precompute_depth)
+    31856    0.028    0.000    0.318    0.000 schedule_step3.py:257(allocate_outputs)
+   566386    0.228    0.000    0.302    0.000 {built-in method builtins.sorted}
+    31856    0.056    0.000    0.283    0.000 schedule_step3.py:185(allocate_tensor)
+       30    0.027    0.001    0.261    0.009 multicore_cut_evaluate_problem_1.py:51(_copy_traffic_bytes)
+  2048900    0.260    0.000    0.260    0.000 {method 'get' of 'dict' objects}
+    31856    0.063    0.000    0.223    0.000 schedule_step3.py:261(consume_inputs)
+  2272339    0.221    0.000    0.221    0.000 {method 'append' of 'list' objects}
+  2139416    0.212    0.000    0.212    0.000 {method 'add' of 'set' objects}
+    30109    0.121    0.000    0.210    0.000 schedule_step3.py:158(consume_free_credit)
+        1    0.001    0.001    0.204    0.204 graph.py:136(load)
+       42    0.163    0.004    0.202    0.005 schedule_step1.py:69(bipartite_to_op_adj)
+   166200    0.092    0.000    0.172    0.000 multicore_cut_evaluate_problem_2.py:381(queue_if_ready)
+
+

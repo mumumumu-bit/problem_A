@@ -1,0 +1,3 @@
+data movement: scheduled_copy_bytes=1656832, physical_ddr_bytes=1656832
+OK: problem 1 makespan=65337; result=D:\problem_A\problem_A\results\development_v2\case_001_p1_n4\cli\result.json
+

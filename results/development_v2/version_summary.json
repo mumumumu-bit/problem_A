@@ -1,0 +1,8 @@
+{
+  "groups": 36,
+  "improved": 16,
+  "equal": 16,
+  "regressed": 4,
+  "mean_v2_improvement_percent": 4.447692606710481,
+  "timing_caveat": "v1 ran alongside profiling and single-core evaluation; wall times are not a controlled cross-version comparison"
+}

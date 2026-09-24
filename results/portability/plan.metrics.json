@@ -1,0 +1,55 @@
+{
+  "evaluation": {
+    "valid": true,
+    "makespan": 66192,
+    "added_copy_bytes": 535136,
+    "spill_bytes": 0,
+    "cache_hit_rate": 0.09563550990949138,
+    "seconds": 0.07274249999863969,
+    "error": ""
+  },
+  "seconds": 0.0761090999985754,
+  "trials": [
+    {
+      "number": 0,
+      "name": "baseline",
+      "solution_hash": "fb46610ca52cbbf12a6714e89c1f9ccdb29b1b402a93f0f4836be9c467f09b95",
+      "elapsed": 0.0760770999986562,
+      "improved": true,
+      "score": 85885.79999999996,
+      "communication_bytes": 722120,
+      "memory_excess": 0.0,
+      "cache_reuse_bytes": 70688,
+      "valid": true,
+      "makespan": 66192,
+      "added_copy_bytes": 535136,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0.09563550990949138,
+      "seconds": 0.07274249999863969,
+      "error": ""
+    }
+  ],
+  "config": {
+    "seed": 2026,
+    "time_budget": 120.0,
+    "max_evaluations": 36,
+    "candidate_pool": 24,
+    "top_k": 2,
+    "max_rounds": 16,
+    "grains": [
+      4,
+      12,
+      32
+    ],
+    "affinity_weight": 0.5,
+    "communication_weight": 1.0,
+    "memory_weight": 0.0,
+    "cache_weight": 0.0,
+    "atomic_fraction": 0.5,
+    "weak_link_fraction": 0.25,
+    "pipe_balance_weight": 0.2,
+    "seed_budget_fraction": 0.45,
+    "whole_graph_max_ops": 10000,
+    "workers": 2
+  }
+}

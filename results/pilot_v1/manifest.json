@@ -1,0 +1,44 @@
+{
+  "created": "2026-09-24T06:02:15.568383+00:00",
+  "git_commit": "6dcc53eaa309ee1e34804dcd7e41d99aad9b875d",
+  "git_dirty": true,
+  "python": "3.14.6 | packaged by Anaconda, Inc. | (main, Jun 18 2026, 21:18:42) [MSC v.1942 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "algorithm_version": "0.1.0",
+  "source_hash": "267b577df2a6dca9f25f89e7109b12c93f07937c3650aac5a0a6a02e940f878b",
+  "config": {
+    "seed": 2026,
+    "time_budget": 120,
+    "max_evaluations": 36,
+    "candidate_pool": 24,
+    "top_k": 2,
+    "max_rounds": 16,
+    "grains": [
+      4,
+      12,
+      32
+    ],
+    "affinity_weight": 0.5,
+    "communication_weight": 1.0,
+    "memory_weight": 0.0,
+    "cache_weight": 0.0,
+    "workers": 2
+  },
+  "seed": 2026,
+  "cases": [
+    "case_001",
+    "case_019"
+  ],
+  "problems": [
+    1,
+    2,
+    3
+  ],
+  "cores": [
+    2,
+    4
+  ],
+  "timing": "Wall time, cumulative across baseline -> multi-seed -> VNS. Cache hits recorded separately.",
+  "budget": "Soft wall deadline checked between official calls; one in-flight evaluation may overrun.",
+  "identity": "15af69ce1a24dfa05ee65c8a179528a6c9a8ec9bfee072abb9cb8b7829a64765"
+}

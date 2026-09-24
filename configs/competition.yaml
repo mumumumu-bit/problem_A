@@ -1,0 +1,1 @@
+{"seed":2026,"time_budget":300,"max_evaluations":64,"candidate_pool":48,"top_k":3,"max_rounds":32,"grains":[4,12,32],"workers":2}

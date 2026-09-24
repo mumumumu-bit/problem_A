@@ -1,0 +1,73 @@
+{
+  "rows": [
+    {
+      "case": "case_001",
+      "problem": 1,
+      "cores": 4,
+      "algorithm": "baseline",
+      "makespan": 71604,
+      "added_copy_bytes": 56448,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0,
+      "runtime": 0.11130010000124457,
+      "evaluations": 1,
+      "source": "baseline",
+      "scale": "small"
+    },
+    {
+      "case": "case_001",
+      "problem": 1,
+      "cores": 4,
+      "algorithm": "multiseed",
+      "makespan": 69030,
+      "added_copy_bytes": 18432,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0,
+      "runtime": 1.2305888999999297,
+      "evaluations": 7,
+      "source": "affinity-4",
+      "scale": "small"
+    },
+    {
+      "case": "case_001",
+      "problem": 1,
+      "cores": 4,
+      "algorithm": "vns",
+      "makespan": 65337,
+      "added_copy_bytes": 17280,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0,
+      "runtime": 4.005113600000186,
+      "evaluations": 36,
+      "source": "N4",
+      "scale": "small"
+    }
+  ],
+  "config": {
+    "seed": 2026,
+    "time_budget": 120,
+    "max_evaluations": 36,
+    "candidate_pool": 24,
+    "top_k": 2,
+    "max_rounds": 16,
+    "grains": [
+      4,
+      12,
+      32
+    ],
+    "affinity_weight": 0.5,
+    "communication_weight": 1.0,
+    "memory_weight": 0.0,
+    "cache_weight": 0.0,
+    "workers": 2
+  },
+  "graph_hash": "052a49324ad7011853adcbb13f953571501d4f1b3c07a80531a63b607f8628ab",
+  "official_hash": "d8e09c792cd35ec8835dd914bde5d9bc21393d69dff27de8ffc3fd065572322d",
+  "evaluator_calls": 36,
+  "cache_hits": 0,
+  "evaluator_seconds": 3.555162400012705,
+  "total_seconds": 3.9855425999994623,
+  "cli_verified": true,
+  "cli_seconds": 0.20210810000025958,
+  "invalid_candidates": 0
+}

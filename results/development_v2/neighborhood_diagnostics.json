@@ -1,0 +1,42 @@
+{
+  "N1": {
+    "evaluated": 236,
+    "improved": 50,
+    "seconds": 378.1188130999926
+  },
+  "N2": {
+    "evaluated": 128,
+    "improved": 23,
+    "seconds": 198.3275989000049
+  },
+  "N3": {
+    "evaluated": 78,
+    "improved": 0,
+    "seconds": 136.40423380000902
+  },
+  "N4": {
+    "evaluated": 71,
+    "improved": 13,
+    "seconds": 90.66801689999556
+  },
+  "N5": {
+    "evaluated": 40,
+    "improved": 8,
+    "seconds": 32.41499499999736
+  },
+  "N6": {
+    "evaluated": 18,
+    "improved": 2,
+    "seconds": 1.2604512999969302
+  },
+  "N8": {
+    "evaluated": 13,
+    "improved": 0,
+    "seconds": 2.7330656000031013
+  },
+  "N7": {
+    "evaluated": 2,
+    "improved": 0,
+    "seconds": 0.13694740000028105
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "source_run": "../development_v1",
+  "official_hash": "bb32dc6849453ba7fe49685c00134a54a9bf526390a711c6df7eef3f37f48b51",
+  "note": "Reused independent singlecore evaluations; identical official code and hardware config. Runtime recorded in source run."
+}

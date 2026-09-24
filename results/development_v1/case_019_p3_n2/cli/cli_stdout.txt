@@ -1,0 +1,3 @@
+data movement: scheduled_copy_bytes=339592, physical_ddr_bytes=339592, cache_hits=10/122, cache_hit_bytes=47136
+OK: problem 3 makespan=37836; result=D:\problem_A\problem_A\results\development_v1\case_019_p3_n2\cli\result.json
+

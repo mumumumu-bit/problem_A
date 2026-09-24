@@ -1,0 +1,78 @@
+{
+  "rows": [
+    {
+      "case": "case_085",
+      "problem": 1,
+      "cores": 2,
+      "algorithm": "baseline",
+      "makespan": 3171548,
+      "added_copy_bytes": 4468336,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0,
+      "runtime": 5.529339299999265,
+      "evaluations": 1,
+      "source": "baseline",
+      "scale": "large"
+    },
+    {
+      "case": "case_085",
+      "problem": 1,
+      "cores": 2,
+      "algorithm": "multiseed",
+      "makespan": 2887495,
+      "added_copy_bytes": 7870018,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0,
+      "runtime": 56.53112139999939,
+      "evaluations": 10,
+      "source": "balanced-32",
+      "scale": "large"
+    },
+    {
+      "case": "case_085",
+      "problem": 1,
+      "cores": 2,
+      "algorithm": "vns",
+      "makespan": 2841441,
+      "added_copy_bytes": 7870018,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0,
+      "runtime": 121.37114640000073,
+      "evaluations": 26,
+      "source": "N1",
+      "scale": "large"
+    }
+  ],
+  "config": {
+    "seed": 2026,
+    "time_budget": 120,
+    "max_evaluations": 26,
+    "candidate_pool": 24,
+    "top_k": 2,
+    "max_rounds": 16,
+    "grains": [
+      4,
+      12,
+      32
+    ],
+    "affinity_weight": 0.5,
+    "communication_weight": 1.0,
+    "memory_weight": 0.0,
+    "cache_weight": 0.0,
+    "atomic_fraction": 0.5,
+    "weak_link_fraction": 0.25,
+    "pipe_balance_weight": 0.2,
+    "seed_budget_fraction": 0.45,
+    "whole_graph_max_ops": 10000,
+    "workers": 2
+  },
+  "graph_hash": "4c52f4062bf8e88a11a36502b4bc476e0dfe3454f35c8c7d9cf3dfabf5c2c825",
+  "official_hash": "d8e09c792cd35ec8835dd914bde5d9bc21393d69dff27de8ffc3fd065572322d",
+  "evaluator_calls": 26,
+  "cache_hits": 0,
+  "evaluator_seconds": 112.9969502999993,
+  "total_seconds": 120.8849339999997,
+  "cli_verified": true,
+  "cli_seconds": 3.417143799999394,
+  "invalid_candidates": 0
+}
