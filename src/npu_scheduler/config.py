@@ -28,6 +28,12 @@ class SolverConfig:
     seed_budget_fraction: float = 0.45
     whole_graph_max_ops: int = 10000
     workers: int = 2
+    # Adaptive VNS neighbourhood budget parameters
+    adaptive_budget: bool = False  # enable dynamic neighbourhood selection
+    min_neighbourhood_trials: int = 3  # minimum exploration per neighbourhood
+    stagnation_patience: int = 8  # early stop after N consecutive non-improving evals
+    fine_grain: int = 2  # extra-fine coarsening grain for v1-recovered variants
+    portfolio_size: int = 10  # max structural seed candidates
 
     def __post_init__(self):
         for name in ('time_budget', 'max_evaluations', 'candidate_pool', 'top_k', 'workers'):
@@ -37,6 +43,8 @@ class SolverConfig:
             raise ValueError('invalid rounds or grains')
         if not 0 < self.seed_budget_fraction <= 1 or self.whole_graph_max_ops < 0:
             raise ValueError('invalid seed budget or whole-graph threshold')
+        if self.fine_grain <= 0 or self.portfolio_size <= 0:
+            raise ValueError('invalid fine grain or portfolio size')
 
     @classmethod
     def load(cls, path=None):

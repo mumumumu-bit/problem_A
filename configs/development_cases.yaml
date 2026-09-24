@@ -1,0 +1,24 @@
+# Extended Development Set for Round 3
+# Selected from 100 cases by stratified sampling on:
+#   non_copy_ops, DAG depth, width, PIPE_M/PIPE_V workload ratio,
+#   communication/computation ratio, tensor size/memory pressure, graph scale.
+# Must-include regression gates: case_001, case_019, case_005, case_050, case_025, case_085
+development_cases:
+  - case_001   # small (1001 ops), wide (200 width), balanced, low comm/comp (6.22)
+  - case_019   # xsmall (766 ops), deep (78), moderate comm/comp (18.36), regression gate
+  - case_005   # medium (4209 ops), chain-like, very high comm/comp (38.41), single component
+  - case_050   # medium (4781 ops), moderate depth (185), diverse pipe workload, regression gate
+  - case_025   # large (23997 ops), ultra-wide (5332), low comm/comp (8.99), 2666 components
+  - case_085   # large (19993 ops), deep (449), complex components, regression gate
+  - case_014   # xlarge (38666 ops), ultra-wide (15921), 1340 components, extreme scale
+  - case_035   # medium (4237 ops), deep (332), high fan_out (14), high comm/comp (23.79)
+  - case_047   # medium-large (13988 ops), chain-depth (459), pipe-heavy, single component
+  - case_054   # medium-large (16133 ops), deep (353), wide (324), 24 components
+  - case_060   # medium (6086 ops), very wide (1977), moderate comm/comp (17.66), 89 components
+  - case_069   # small (1074 ops), chain-like (depth=45), extreme comm/comp (36.98)
+  - case_087   # xlarge (28666 ops), deep (381), wide (3066), 196 components
+  - case_093   # xsmall (901 ops), very shallow (depth=3), moderate width (276), 69 components
+  - case_100   # small (1654 ops), high fan_out (14), moderate comm/comp (25.19)
+
+# Scale distribution: xsmall(2) + small(3) + medium(5) + large(2) + xlarge(3) = 15
+# Regression gate must-pass for case_019 P1/N2, P1/N4
