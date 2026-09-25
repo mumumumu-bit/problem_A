@@ -19,9 +19,12 @@ def seeds(graph, cores, problem, hardware, config):
     # produced better VNS outcomes on case_019.
     extra_grains = [config.fine_grain] if config.fine_grain not in config.grains else []
     all_grains = tuple(config.grains) + tuple(extra_grains)
-    first=[('affinity',all_grains[0]),('critical',all_grains[len(config.grains)//2]),
-           ('pipe',all_grains[-1]),('balanced',all_grains[-1])]
-    grid=first+[(mode,grain) for grain in all_grains for mode in ('affinity','critical','pipe','balanced')]
+    # Priority seeds always use the original grains, never the extra fine grain.
+    first=[('affinity',config.grains[0]),('critical',config.grains[len(config.grains)//2]),
+           ('pipe',config.grains[-1]),('balanced',config.grains[-1])]
+    # Insert fine-grain variants right after priority seeds so they are included even with small portfolio_size.
+    fine_variants = [(mode, g) for g in extra_grains for mode in ('affinity','critical','pipe','balanced')]
+    grid=first + fine_variants + [(mode,grain) for grain in all_grains for mode in ('affinity','critical','pipe','balanced')]
     used, count = set(), 0
     for mode,grain in grid:
         if (mode,grain) not in used and count < config.portfolio_size:

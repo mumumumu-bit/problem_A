@@ -1,0 +1,18 @@
+第一轮已完成：**41 项测试通过，36 组代表实验全部通过官方 CLI 复核**。相比基线，Makespan 平均逐组降低 **18.79%**；VNS 在 **25/36 组**中进一步改善多初解。官方代码与数据保持原样，未启动完整 100 例优化。
+
+完整交付见：[第一轮报告](D:/problem_A/problem_A/docs/first_round_report.md) · [运行说明](D:/problem_A/problem_A/docs/solver_usage.md)
+
+### 【工程结构】
+
+已建立职责分离的工程：
+
+- `graph.py / types.py`：GraphData、特征预计算、方案表示与校验。
+- `partition / schedule / search`：分块、核分配、多初解、VNS。
+- `evaluator / experiment`：官方适配、缓存、日志、断点续跑、独立 CLI 复核。
+- `visualization / scripts / configs / tests`：科研绘图、实验入口、预算配置、测试。
+
+### 【算法实现】
+
+实际实现了四类多粒度种子：负载均衡、亲和度、关键路径、Pipe 平衡；以及考虑前驱可用时间和通信的 ready-list 核分配。
+
+VNS 包含全部八类邻域：移动、交换、独立块换序、合并、分裂、边界调整、强连接块联合放置、关键路径移动。候选先筛选，再调用官方评估，按 **Makespan、Added Copy 字典序**接受改善。
