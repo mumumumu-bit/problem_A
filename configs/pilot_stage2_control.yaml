@@ -1,0 +1,1 @@
+{"seed":2026,"time_budget":120,"max_evaluations":36,"candidate_pool":24,"top_k":2,"max_rounds":16,"grains":[4,12,32],"workers":2,"adaptive_budget":true,"min_neighbourhood_trials":3,"stagnation_patience":8,"fine_grain":2,"portfolio_size":12,"sa_enabled":false,"sa_initial_temp":0.01,"sa_cooling":0.90,"sa_min_temp":0.001,"sa_stagnation_trigger":4,"sa_max_uphill_accepts":4}
