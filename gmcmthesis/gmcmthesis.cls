@@ -212,8 +212,8 @@ Just choose `xelatex', no `pdflatex' or `latex' and so on.}
     \setCJKfamilyfont{zhsong}[AutoFakeBold=2.15]{SimSun}
     \setCJKfamilyfont{zhhei}[AutoFakeBold=2.15]{SimHei}
     \ifx\lishu\undefined%
-      \setCJKfamilyfont{zhli}[AutoFakeBold=2.15,Extension=.otf]{FandolKai-Regular}
-      \newcommand*\lishu{\CJKfamily{zhli}}
+      \setCJKfamilyfont{zhli}{LiSu}
+      \newcommand*\lishu{\CJKfamily{zhli}} %% Do this if it is undefined
     \fi
   \else
     \ifmcm@fandol
