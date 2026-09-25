@@ -34,6 +34,13 @@ class SolverConfig:
     stagnation_patience: int = 8  # early stop after N consecutive non-improving evals
     fine_grain: int = 2  # extra-fine coarsening grain for v1-recovered variants
     portfolio_size: int = 10  # max structural seed candidates
+    # Bounded simulated-annealing escape (disabled by default)
+    sa_enabled: bool = False
+    sa_initial_temp: float = 0.01
+    sa_cooling: float = 0.90
+    sa_min_temp: float = 0.001
+    sa_stagnation_trigger: int = 4
+    sa_max_uphill_accepts: int = 4
 
     def __post_init__(self):
         for name in ('time_budget', 'max_evaluations', 'candidate_pool', 'top_k', 'workers'):
@@ -45,6 +52,10 @@ class SolverConfig:
             raise ValueError('invalid seed budget or whole-graph threshold')
         if self.fine_grain <= 0 or self.portfolio_size <= 0:
             raise ValueError('invalid fine grain or portfolio size')
+        if (self.sa_initial_temp <= 0 or not 0 < self.sa_cooling <= 1
+                or self.sa_min_temp <= 0 or self.sa_min_temp > self.sa_initial_temp
+                or self.sa_stagnation_trigger < 1 or self.sa_max_uphill_accepts < 0):
+            raise ValueError('invalid SA parameters')
 
     @classmethod
     def load(cls, path=None):

@@ -3,8 +3,9 @@
 # 模型/版本：
 # 开发机构：
 # 版本发布日期：
-"""Multi-seed search with monotone incumbent, budget accounting and trial logs."""
+"""Multi-seed search with bounded SA escape, budget accounting and trial logs."""
 from dataclasses import asdict
+import math
 import random
 import time
 from ..config import StrategySelector
@@ -31,10 +32,13 @@ def solve(graph,cores,evaluator,config,algorithm='vns',on_trial=None):
     hw=hardware_view(evaluator)
     rng=random.Random(config.seed)
     start=time.perf_counter()
-    incumbent,value,best_name=None,None,None
+    current_solution,current_value=None,None
+    best_solution,best_value,best_name=None,None,None
     trials,seen=[],set()
     snapshots={}
     evaluated=0
+    temperature=config.sa_initial_temp
+    uphill_accepts=0
     # Adaptive neighbourhood tracking
     neighbourhood_stats = {k: dict(attempts=0,successes=0,gain=0.0,eval_time=0.0)
                            for k in range(8)}
@@ -42,48 +46,83 @@ def solve(graph,cores,evaluator,config,algorithm='vns',on_trial=None):
     def budget():
         return evaluated<config.max_evaluations and time.perf_counter()-start<config.time_budget
 
-    def consider(name,solution):
-        nonlocal incumbent,value,best_name,evaluated
+    def consider(name,solution,allow_uphill=False):
+        nonlocal current_solution,current_value,best_solution,best_value,best_name
+        nonlocal evaluated,temperature,uphill_accepts
+        if not budget():
+            return False,False
         key=solution.digest()
         if key in seen:
-            return False
+            return False,False
         seen.add(key)
         prediction=estimate(graph,solution,evaluator.problem,hw,config,diagnostics=True)
         result=evaluator.evaluate(solution)
         evaluated+=1
-        improved=result.valid and (value is None or result.objective<value.objective)
-        if improved:
-            incumbent,value,best_name=solution,result,name
+        is_global_best=result.valid and (best_value is None or result.objective<best_value.objective)
+        accepted=False
+        accept_reason='rejected'
+        delta_relative=None
+        strict_improvement=False
+        if result.valid and current_value is None:
+            accepted=True
+            strict_improvement=True
+            accept_reason='strict_improvement'
+        elif result.valid and result.makespan < current_value.makespan:
+            accepted=True
+            strict_improvement=True
+            accept_reason='strict_improvement'
+        elif (result.valid and result.makespan == current_value.makespan
+              and result.added_copy_bytes < current_value.added_copy_bytes):
+            accepted=True
+            strict_improvement=True
+            accept_reason='same_makespan_lower_copy'
+        elif result.valid and result.makespan > current_value.makespan:
+            delta_relative=(result.makespan-current_value.makespan)/current_value.makespan
+            if (allow_uphill and config.sa_enabled
+                    and uphill_accepts < config.sa_max_uphill_accepts
+                    and rng.random() < math.exp(-delta_relative/temperature)):
+                accepted=True
+                accept_reason='sa_uphill'
+                uphill_accepts+=1
+                temperature=max(config.sa_min_temp,temperature*config.sa_cooling)
+        if accepted:
+            current_solution,current_value=solution,result
+        if is_global_best:
+            best_solution,best_value,best_name=solution,result,name
+            if config.sa_enabled:
+                temperature=config.sa_initial_temp
         trial=dict(number=len(trials),name=name,solution_hash=key,elapsed=time.perf_counter()-start,
-                   improved=improved,**prediction,**asdict(result))
+                   improved=is_global_best,accepted=accepted,accept_reason=accept_reason,
+                   temperature=temperature,delta_relative=delta_relative,
+                   is_global_best=is_global_best,**prediction,**asdict(result))
         trials.append(trial)
         if on_trial:
-            on_trial(trial,incumbent,value)
-        return improved
+            on_trial(trial,best_solution,best_value)
+        return accepted,strict_improvement
 
     def snapshot():
-        return dict(solution=incumbent,evaluation=value,seconds=time.perf_counter()-start,
+        return dict(solution=best_solution,evaluation=best_value,seconds=time.perf_counter()-start,
                     evaluations=evaluated,source=best_name)
 
     families=set()
     for name,solution in seeds(graph,cores,evaluator.problem,hw,config):
-        if incumbent is not None and (algorithm=='baseline' or not budget()):
+        if best_solution is not None and (algorithm=='baseline' or not budget()):
             break
-        if (incumbent is not None and algorithm=='vns' and len(families)>=4
+        if (best_solution is not None and algorithm=='vns' and len(families)>=4
                 and time.perf_counter()-start>=config.time_budget*config.seed_budget_fraction):
             break
         consider(name,solution)
         if name!='whole':
             families.add('balanced' if name=='baseline' else name.split('-')[0])
-        if name=='baseline' and value is not None:
+        if name=='baseline' and best_value is not None:
             snapshots['baseline']=snapshot()
-        elif 'baseline' not in snapshots and value is not None:
+        elif 'baseline' not in snapshots and best_value is not None:
             snapshots['baseline']=snapshot()
-    if incumbent is None:
+    if best_solution is None:
         consider('emergency-whole',Solution((tuple(graph.topo),) if graph.n else (), (0,) if graph.n else (),cores))
-        if incumbent is not None:
+        if best_solution is not None:
             snapshots['baseline']=snapshot()
-    if incumbent is None:
+    if best_solution is None:
         raise RuntimeError('No officially executable seed: '+str(trials[-1:] ))
     snapshots['multiseed']=snapshot()
     if algorithm=='vns':
@@ -127,24 +166,27 @@ def solve(graph,cores,evaluator,config,algorithm='vns',on_trial=None):
 
         kind = select_neighbourhood()
         while budget() and rounds < config.max_rounds and kind < 8 and len(active_neighbourhoods) > 0:
-            candidates = [s for s in neighbors(graph, incumbent, kind, rng, config.candidate_pool)
+            candidates = [s for s in neighbors(graph, current_solution, kind, rng, config.candidate_pool)
                           if s.digest() not in seen]
             ranked = sorted(candidates, key=lambda s: (estimate(graph, s, evaluator.problem, hw, config), s.digest()))
             improved = False
+            allow_uphill=(config.sa_enabled and stagnation_count>=config.sa_stagnation_trigger
+                          and uphill_accepts<config.sa_max_uphill_accepts)
             for candidate in ranked[:config.top_k]:
                 if not budget():
                     break
-                before = value
+                before = current_value
                 t_start = time.perf_counter()
-                accepted = consider(f'N{kind+1}', candidate)
+                accepted,strict_improvement = consider(f'N{kind+1}',candidate,allow_uphill)
                 t_elapsed = time.perf_counter() - t_start
                 # Update neighbourhood statistics
                 neighbourhood_stats[kind]['attempts'] += 1
                 neighbourhood_stats[kind]['eval_time'] += t_elapsed
-                if accepted:
+                if strict_improvement:
+                    allow_uphill = False
                     neighbourhood_stats[kind]['successes'] += 1
                     if before is not None:
-                        gain = before.makespan - value.makespan
+                        gain = before.makespan - current_value.makespan
                         neighbourhood_stats[kind]['gain'] += gain
                     improved = True
 
@@ -178,7 +220,7 @@ def solve(graph,cores,evaluator,config,algorithm='vns',on_trial=None):
                 kind = select_neighbourhood() if config.adaptive_budget else kind + 1
             rounds += 1
     snapshots['vns']=snapshot()
-    return dict(solution=incumbent,evaluation=value,trials=trials,snapshots=snapshots,
+    return dict(solution=best_solution,evaluation=best_value,trials=trials,snapshots=snapshots,
                 seconds=time.perf_counter()-start,scale=scale,config=config.to_dict(),
                 evaluator_calls=evaluator.calls,cache_hits=evaluator.hits,evaluator_seconds=evaluator.seconds,
                 neighbourhood_stats={f'N{k+1}': v for k, v in neighbourhood_stats.items()})
