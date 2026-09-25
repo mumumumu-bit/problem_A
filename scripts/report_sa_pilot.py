@@ -11,7 +11,7 @@ def load_arm(run_root, arm):
     arm_root = run_root / arm
     if not arm_root.is_dir():
         raise FileNotFoundError(f'Missing pilot arm directory: {arm_root}')
-    for job_path in sorted(arm_root.glob('*/job.json')):
+    for job_path in sorted(arm_root.rglob('job.json')):
         job = json.loads(job_path.read_text(encoding='utf-8'))
         row = next((r for r in job['rows'] if r['algorithm'] == 'vns'), None)
         if row is None:
