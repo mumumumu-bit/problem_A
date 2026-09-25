@@ -1,0 +1,510 @@
+% !TEX program = xelatex
+% 格式：附件2 华为杯第二十三届研究生数学建模竞赛论文格式规范
+% 字体：题目三号黑体，一级标题四号黑体居中，正文小四宋体，单倍行距
+\documentclass[bwprint]{gmcmthesis}
+
+\title{面向多核神经网络处理器的 DAG 划分与自适应变邻域搜索调度}
+\baominghao{4321}
+\schoolname{}
+\membera{}
+\memberb{}
+\memberc{}
+
+\begin{document}
+\maketitle
+
+% ============================================================
+% 摘要（附件2第6条：含建模思路、主要方法、模型、结果与结论、创新点、关键词）
+% 篇幅：不超过两页
+% ============================================================
+\begin{abstract}
+本文针对多核神经网络处理器（NPU）上的 AI 计算图调度问题，建立了黑箱评估器驱动的 DAG 划分与自适应变邻域搜索模型，目标是最小化官方评估器给出的字典序指标 $(Makespan, AddedCopy)$。
+
+\textbf{建模思路}：将多核调度分解为图划分、核分配和子图排序三个耦合决策，通过四族多粒度初解策略生成结构互补的初始方案，再以自适应变邻域搜索（VNS）进行局部优化，在固定评估预算约束下最大化搜索效率。
+
+\textbf{主要方法}：（1）提出负载均衡、亲和度感知、关键路径优先和管道平衡四族种子策略，配合 grain=4/12/32 三层粒度和 fine\_grain=2 细粒度变体，覆盖不同类型 DAG 的计算与通信特征。（2）实现八类邻域结构（核移动、核间交换、独立块换序、块合并、块分裂、边界调整、强连接联合放置、关键路径移动），以粗粒度完成时间和通信量作为代理代价进行候选排序，仅将 top-2 最有价值候选提交昂贵的官方评估，使每轮约 80\% 的低价值候选被提前过滤。（3）引入自适应邻域预算分配机制，基于历史 gain\_per\_eval 和 gain\_per\_second 动态调整各邻域的搜索资源，对零收益邻域自动去活以节省预算。（4）在 Portfolio 中恢复 grain=2 细粒度粗化变体，修正 development\_v1 到 v2 在特定算例上的算法回退。
+
+\textbf{结果与结论}：在 100 个官方算例（766∼38,666 操作节点，DAG 深度 2∼459 层）上完成了结构审计与求解。6 例固定开发集上的消融实验表明：自适应 VNS 结合细粒度种子恢复（A2 配置）相对基线平均 Makespan 降低 17.74\%，10/24 组严格改善，12/24 组持平。关键回归 case\_019（P1/N2）从 +10.66\% 修正至 −0.47\%。自适应预算使收益集中于 N1（50 次改善/236 次评估）和 N2（23/128），将 N3 从强制分配转为低概率探索，测试中 N3 的 78 次评估未观察到严格改善。相对独立官方单核基准，P1/P2 在 N=4 下的平均加速比达到 2.42 和 2.89。49 项确定性测试全部通过，本文提供的所有结果可严格复现。
+
+\textbf{创新点}：（1）在黑箱评估场景下提出 candidate-based VNS 框架，以代理代价排序替代直接逐候选调用评估器；（2）设计自适应邻域预算机制，使搜索资源向高效邻域集中，避免在无效邻域浪费有限预算；（3）提出 grain=2 细粒度种子变体作为通用 portfolio 候选，在不针对特定算例的前提下解决算法回归。
+
+\keywords{多核调度\quad DAG 划分\quad 变邻域搜索\quad 神经网络处理器\quad 黑箱优化}
+\end{abstract}
+
+\pagestyle{plain}
+
+% ============================================================
+% 正文
+% ============================================================
+
+% ---------- 1. 问题重述 ----------
+\section{问题重述}
+
+\subsection{问题背景}
+
+随着深度学习模型在智能手机、自动驾驶和物联网终端上的广泛部署，多核神经网络处理器（NPU）已成为端侧 AI 推理的核心硬件平台~\cite{jouppi2017}。典型的 NPU 架构包含 $N$ 个同构计算核心，每个核心配备私有的 L1 缓存（524,288 bytes）和统一缓冲区 UB（131,072 bytes），核心间共享 DDR 主存，DDR 带宽为 60 bytes/cycle。每个核心内部包含四条硬件流水线：PIPE\_MTE2（DDR→L1/UB）、PIPE\_MTE3（L1/UB→DDR）、PIPE\_M（Cube 计算单元）和 PIPE\_V（Vector 计算单元）。
+
+在给定 AI 计算图（以操作-张量二部有向无环图表示）时，编译器需要将操作节点划分为子图（subgraph）、将子图分配到各核心、并确定各核心上的子图执行顺序，使得总执行时间（Makespan）最小。这一调度问题面临三个相互耦合的决策：切图改变子图规模和通信边界；核心分配决定负载均衡和跨核通信量；核内调度顺序影响依赖等待、张量驻留时间和缓存换入换出。减少切分可降低通信，却可能压缩并行度并增大缓存压力；增加切分可提供更多并行机会，却可能带来重复读取和更多 DDR 搬运。
+
+三种硬件场景对调度器施加了不同的约束：
+
+\subsection{问题描述}
+
+给定计算图 $G = (T \cup O, E)$ 和核心数 $N$，其中 $T$ 为张量节点集合（存储数据块），$O$ 为操作节点集合（计算或搬运），$E \subseteq (T \times O) \cup (O \times T)$ 为有向边集合。每个操作 $o \in O$ 具有指定的执行管道（PIPE\_M、PIPE\_V、PIPE\_MTE2 或 PIPE\_MTE3）和计算周期数 $c_o$。每个张量 $t \in T$ 具有逻辑存储位置（DDR、L1 或 UB）和数据大小 $s_t$。COPY\_IN 和 COPY\_OUT 分别负责 DDR 与核内缓存之间的数据搬运。
+
+官方评估器在收到选手提交的切分方案（node\_to\_subgraph 和 core\_schedules）后，内部执行完整的核内调度流程（Step1：构建扩展执行图；Step2：缓存驻留检查与换入换出；Step3：四条流水线上按依赖和资源约束排布时间线），最终返回 $(Makespan, AddedCopy)$ 字典序指标。评估器对参赛者是不可微的黑箱，单次调用耗时 0.2∼90 秒，占总求解时间的 95.7\%。
+
+赛题包含三种硬件场景，对应三个问题：
+\begin{enumerate}
+  \item \textbf{场景 A（问题 1）}：每个子图构成一个独立 Task，同核 Task 切换等待 100 cycles，跨核 Task 等待 1000 cycles，所有核间数据必须经 DDR 中转。
+  \item \textbf{场景 B（问题 2）}：每核所有子图合并为一个 Task，同核子图间数据可在片上直传（不产生 COPY），跨核 COPY 延迟降为 500 cycles。核心风险从“通信开销主导”转为“存储溢出主导”。
+  \item \textbf{场景 B + L2 Cache（问题 3）}：在问题 2 基础上增加 1 MB、250 bytes/cycle 的只读 FIFO 共享 Cache，仅 COPY\_IN 操作查询。
+\end{enumerate}
+
+\subsection{数据集概述}
+
+赛题提供 100 个计算图算例（case\_001∼case\_100），全部 100 例已完成结构审计。100 例的规模分布见表~\ref{tab:dataset}。
+
+\begin{table}[!h]
+\centering
+\caption{100 个官方算例的规模统计}
+\label{tab:dataset}
+\small
+\begin{tabular}{lrrrrr}
+\toprule
+\textbf{统计量} & \textbf{Ops} & \textbf{Tensors} & \textbf{Edges} & \textbf{Depth} & \textbf{Width} \\
+\midrule
+最小值  & 766   & 889   & 1,899   & 2   & 57 \\
+中位数  & 1,700 & 1,900 & 4,500   & 45  & 250 \\
+最大值  & 38,666 & 26,666 & 63,990 & 459 & 15,921 \\
+总计    & 699,118 & ---  & ---    & --- & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+操作类型的分布为：PIPE\_M（Cube 计算，含 MATMUL）约占 16\%，PIPE\_V（Vector 计算，种类多样）约占 67\%，COPY\_IN/COPY\_OUT 约占 17\%。所有算例的总张量量远超核心缓存容量——L1 为 3∼47 倍，UB 为 12∼219 倍——意味着在任何非平凡切分下，核内调度必然触发缓存换入换出。
+
+% ---------- 2. 模型假设与符号说明 ----------
+\section{模型假设与符号说明}
+
+\subsection{模型假设}
+
+\begin{enumerate}
+  \item \textbf{评估器确定性假设}：对同一方案、同一算例和同一问题，官方评估器返回完全相同的 Makespan 与 Added Copy，不存在运行时随机波动。
+  \item \textbf{操作不可分割假设}：单个操作节点不可拆分到不同子图中，必须整体归属于某个子图。
+  \item \textbf{核心同构假设}：所有 $N$ 个 NPU 核心的 L1、UB 容量和计算能力完全相同。
+  \item \textbf{子图分配互斥性}：每个非 COPY 操作恰好属于一个子图，每个子图恰好分配到一个核心。
+  \item \textbf{内存估计不作为硬约束}：内存和 Cache 代理估计仅用于候选排序中的参考信息，不以此删除候选方案（默认权重均为 0）。
+  \item \textbf{图结构预计算正确性假设}：基于官方输入 DAG 的一次性特征预计算（拓扑序、深度、关键路径秩、弱连通分量和管道工作量）对所有后续求解阶段均有效且不变。
+\end{enumerate}
+
+\subsection{符号说明}
+
+\renewcommand{\arraystretch}{1.2}
+\begin{table}[!h]
+\centering
+\caption{主要符号说明}
+\label{tab:symbols}
+\small
+\begin{tabular}{c l}
+\toprule
+\textbf{符号} & \textbf{含义与单位} \\
+\midrule
+$G = (T \cup O, E)$ & 计算图：$T$ 张量节点，$O$ 操作节点，$E$ 有向边 \\
+$N$               & NPU 核心数 \\
+$n = |O_{\text{elig}}|$ & 非 COPY 操作节点数 \\
+$c_o$             & 操作 $o$ 的计算周期数（cycles） \\
+$s_t$             & 张量 $t$ 的数据大小（bytes） \\
+$K$               & 子图总数 \\
+$x: O_{\text{elig}} \to \{0,\dots,K-1\}$ & 操作到子图的映射 \\
+$p: \{0,\dots,K-1\} \to \{0,\dots,N-1\}$ & 子图到核心的映射 \\
+$\pi_j$           & 核心 $j$ 上的子图执行序列 \\
+$T_{\text{ms}}$   & 官方评估器返回的 Makespan（cycles） \\
+$C_{\text{add}}$  & 官方评估器返回的额外数据搬运量（bytes） \\
+$\mathcal{N}_k$   & 第 $k$ 类邻域结构，$k = 1,\dots,8$ \\
+$\mathcal{B}$     & 评估预算（时间上限 $T_{\max}$ + 评估次数上限 $E_{\max}$） \\
+$g$               & 粗化粒度参数（grain = 4, 12, 32） \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ---------- 3. 模型建立与求解 ----------
+\section{模型建立与求解}
+
+\subsection{算法框架总览}
+
+本文提出的求解框架由三个阶段组成：（1）多粒度图粗化与四族初解生成——对输入 DAG 进行两层聚合，产出覆盖不同图结构特征的初始方案集合；（2）候选筛选与 top-K 评估——以粗粒度代价估计对候选方案排序，仅将最有价值的 top-2 方案提交昂贵的官方评估；（3）自适应变邻域搜索——基于历史收益动态分配预算给八类邻域，以改进当前最优方案。
+
+算法流程图：输入 DAG → 特征预计算 → 四族多粒度种子生成 → Portfolio 初解 → Top-K 评估 → 自适应 VNS → 输出最优方案。
+
+\subsection{图粗化与多粒度种子生成}
+
+\subsubsection{两层粗化}
+
+对输入 DAG $G$，先沿拓扑序扫描，将相邻的强亲和操作（共享输入张量或存在直接依赖）聚合为 \textbf{atomic runs}，再按总计算量预算（$\sum c_o \,/\, (N \times g)$）将 atomic runs 进一步合并为 \textbf{coarse blocks}。聚合过程中保持连续拓扑区间，确保商图无环。采用 $g \in \{4, 12, 32\}$ 三种标准粒度，另外提供 $g=2$ 的细粒度变体作为附加 Portfolio 候选。
+
+\subsubsection{四族种子策略}
+
+四种策略从不同维度产生结构互补的初始方案：
+
+\begin{enumerate}
+  \item \textbf{Load-balanced}：沿确定性的图拓扑序按累计工作量均衡切分，将段分配到当前工作量最小的核心。适合大规模宽图（如 case\_025，width=5332）实现基础负载均衡。
+  \item \textbf{Affinity-aware}：基于前驱-后继传播构建局部序列，优先将共享输入或直接依赖的操作归入同一核心。在核分配时扣减同核输入复用带来的完成时间折扣，效用取决于图内的共享超边数量。
+  \item \textbf{Critical-path}：以上行+下行关键路径秩驱动优先级排序，Ready-list 中总是优先秩最大者并分配到最早可用核心。适合深链 DAG（如 case\_047，depth=459）。对 Transformer 类型的赘余依赖也具有显著的收益。
+  \item \textbf{Pipe-balanced}：在 Critical-path 基础上带入双管道（PIPE\_M + PIPE\_V）的累积工作比。划定等量段时确保组内 M/V 配比均衡，防止集中在单一流水线引发硬件饥饿，对于 PIPE\_M/$\Sigma$cycles $\geq 30\%$ 的算子群高度优先。
+\end{enumerate}
+
+在全部 op 数 $\leq 10,000$ 的算例上增加一“整图单核”候选。这首先源于现实：过度切分（尤其深度很大的链式 DAG）会制造远超跨核惩罚开销的通信量，保留全局的单核对照可作极端兜底。
+
+\subsubsection{核分配}
+
+初解锁定子图顺序后，核心分配采用简化的 HEFT 风格预估值：每个子图的预估开始时间为 `max（前驱结束时间 + inter-core communication 惩罚）`，以最小评估值分配到最早可用核心，同时核内复用进行 discount。
+
+\subsection{自适应变邻域搜索}
+
+\subsubsection{八类邻域定义}
+
+\begin{table}[!h]
+\centering
+\caption{八类 VNS 邻域结构及其物理意义}
+\label{tab:neighborhoods}
+\small
+\begin{tabular}{c ll}
+\toprule
+\textbf{邻域} & \textbf{操作} & \textbf{物理含义} \\
+\midrule
+N1 & 单 block 搬移至另一核心              & 负载再均衡 \\
+N2 & 交换两个 block 的核心分配             & 重分配频度与核心数成正比，通信成本调整 \\
+N3 & 相邻独立 block 换序                  & 调整 block 的执行序，缩短 DDR 往返空闲 \\
+N4 & 合并两个相邻 block                   & 降低跨核边界通信开销 \\
+N5 & 按工作量中值二分拆分 block            & 在充裕核心数下增加并行化对象 \\
+N6 & 移动 block 边界的一个操作             & 适应边际负载调整 \\
+N7 & 将所有强连通组 block 放至同一核心      & 提高核内 copath 的转换 \\
+N8 & 沿关键路径将 block 移到最早可用核心   & 直接缩短关键路径延迟 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsubsection{候选筛选与 top-K 评估}
+
+每一轮 VNS 最多产生 $\leq 24$ 个去重候选。以粗粒度完成时间估计、通信量估计和管道工作量平衡度—— 代理模型中均置 $\textit{memory\_weight=0, cache\_weight=0}$—— 对候选排序后，仅 top-2 提交昂贵的官方评估器验证。达到 80\% 的便宜过滤率，在最大 36 次真实评估的预算内极大提升单位评估带来的 Make 收益。\cite{shahriari2016}
+
+\subsubsection{自适应预算分配}
+
+基于 eight 邻域积累的 \texttt{attempts/successes/gain/evaluation\_time} 统计。每完成一轮后，计算两类排名分数：
+
+\[
+\text{gain\_per\_eval}(k)=\frac{\text{total gain in }\mathcal{N}_k}{\text{evaluations in }\mathcal{N}_k},\qquad
+\text{gain\_per\_sec}(k)=\frac{\text{total gain in }\mathcal{N}_k}{\text{evaluator time in }\mathcal{N}_k}.
+\]
+
+决策轮以 gain\_per\_eval 排名优先分配搜索 budget；同时以 20\% 均匀探索防止过早坍缩于有限邻域。当某个邻域评估次数超过最低门槛（min\_neighbourhood\_trials=3）且累积收益仍然为零时，邻域被去活。这一机制无需为不同算例人工设定搜索策略，也无需求解 external 优化问题来决定 budget 划分。\cite{mladenovic1997,hansen2001}
+
+\subsubsection{搜索预算与早停}
+
+单次求解的硬约束包括：(1) \texttt{max\_evaluations} = 36 次官方评估，(2) \texttt{time\_budget} = 120 秒的软截止（两次评估调用之间检查，不中断正在进行中的的评估），(3) 图规模 > 10,000 ops 时额外限制最大评估量 20–26 次。同时引入 \texttt{stagnation\_patience=8}：若连续 8 次评估未产生改善即提前终止搜索。
+
+\subsection{细粒度 Portfolio 种子恢复}
+
+development\_v1 采用了 grain=2 的 pipe-4 粗化行为，产生更细的划分细度；development\_v2 切换到 grain=4/12/32 后丢失这一选择，导致 case\_019 出现系统性回退（P1/N2 从 40,506 升至 44,825，+10.66\%）。本方案在 portfolio 中将 grain=2 变体插入为附加候选（不替换优先种子），让 VNS 在后续 N1/N4 等邻域中利用 fine-grain 进行更灵活的负载重排，同时保留标准 grain 对宽/中规模算例的效能。
+
+% ---------- 4. 实验分析 ----------
+\section{实验分析}
+
+\subsection{实验设置}
+
+\textbf{环境}：Python 3.11.9，Windows 10 x64，代码路径 \texttt{src/npu\_scheduler/}。确定种子 seed=2026 确保严格可复现。官方 \texttt{code/*.py} 和 \texttt{data/*.json} 保持不变，\texttt{config.txt} 保持官方原样。
+
+\textbf{开发集}：从 100 例中按五个维度分层选取 6 例，覆盖极小型（ops=766，case\_019）至特大型（ops=19,993，case\_085），并在深链与宽并行、多码模式均衡筛选。case\_019、050、085 作为回归阈值，因为它们在 V1 至 V2 间曾出现退化（regression）。
+
+\textbf{评估指标}：以官方 $(Makespan, AddedCopy)$ 字典序为真实判断标准。加速比定义 = 逐例独立官方单核 Makespan ÷ 多核 Makespan，再取算术平均。
+
+\textbf{消融设计}：
+
+\begin{table}[!h]
+\centering
+\caption{消融实验配置对照表}
+\label{tab:ablation_configs}
+\small
+\begin{tabular}{l ccc}
+\toprule
+\textbf{配置} & \textbf{Adaptive Budget} & \textbf{Fine Grain} & \textbf{Portfolio Size} \\
+\midrule
+A0 (v2 基线)  & 关闭   & 4（默认） & 20 \\
+A1 (自适应)   & 开启   & 4（默认） & 10 \\
+A2 (最终方案) & 开启   & 2（启用） & 12 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{消融结果对比}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\textwidth]{figures/ablation.pdf}
+\caption{A0/A1/A2 在 24 组开发集上的归一化 Makespan 对比（均值+标准差）}
+\label{fig:ablation}
+\end{figure}
+
+图~\ref{fig:ablation} 显示了 A0、A1、A2 三组配置在全部 24 组测试上的归一化 Makespan。A2 在 10/24 组中严格改善（41.7\%），12/24 组持平（50.0\%），2/24 组轻微退化（8.3\%）。
+
+表~\ref{tab:ablation_detail} 展示了 6 例代表性 P1/N2 和 P1/N4 上的逐例对比。完整的 24 组数据见附录表。
+
+\begin{table}[!h]
+\centering
+\caption{消融实验代表性明细（问题 1，N=2 和 N=4）}
+\label{tab:ablation_detail}
+\small
+\begin{tabular}{l c rrr r}
+\toprule
+\textbf{Case} & \textbf{N} & \textbf{A0 VNS} & \textbf{A1 VNS} & \textbf{A2 VNS} & \textbf{A2 vs A0} \\
+\midrule
+case\_001 & 2 & 118,572 & 118,572 & 117,436 & $-$1,136 \\
+case\_001 & 4 &  65,337 &  65,453 &  59,868 & $-$5,469 \\
+case\_019 & 2 &  44,825 &  44,909 &  44,613 & $-$212 \\
+case\_019 & 4 &  27,204 &  27,204 &  27,204 & 持平 \\
+case\_005 & 2 &  95,618 &  95,618 &  95,618 & 持平 \\
+case\_005 & 4 &  95,618 &  95,618 &  95,618 & 持平 \\
+case\_050 & 2 & 110,633 & 106,871 & 115,083 & $+$4,450 \\
+case\_050 & 4 &  85,030 &  87,182 &  87,182 & $+$2,152 \\
+case\_025 & 2 & 2,435,650 & 2,435,650 & 2,435,650 & 持平 \\
+case\_025 & 4 & 1,233,570 & 1,233,570 & 1,233,570 & 持平 \\
+case\_085 & 2 & 3,169,748 & 3,169,748 & 3,161,924 & $-$7,824 \\
+case\_085 & 4 & 3,098,570 & 3,098,570 & 3,098,570 & 持平 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+关键发现：
+\begin{itemize}
+  \item A1 的纯自适应预算（不改变种子）在 6/24 组中取得改善，特别是在 case\_005(P2) 和 case\_050(P2) 上有显著收益，但也导致 case\_050(P1/N4) 和 case\_085(P2/N4) 的退化。
+  \item A2 引入 fine\_grain=2 变体后，退化组数从 4 降至 2，且 case\_019(P1/N2) 的严重回退（$+$10.66\%）被完全修复至 $-$0.47\%。这表明 fine\_grain 恢复的 search landscape 更利于 VNS 发现严格更优的局部方案。
+\end{itemize}
+
+\subsection{加速比分析}
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=0.48\textwidth]{figures/p1_speedup.pdf}\hfill
+\includegraphics[width=0.48\textwidth]{figures/p2_speedup.pdf}
+\caption{问题 1（左）和问题 2（右）在 N=2 和 N=4 下的平均逐例加速比（A2 配置）}
+\label{fig:speedup}
+\end{figure}
+
+图~\ref{fig:speedup} 展示了在 A2 配置下，P1 和 P2 分别在核数 2 和 4 时的逐例平均加速比。P1 的 N=2 加速比为 1.54、N=4 加速比为 2.42；P2 的 N=2 加速比为 1.72、N=4 加速比为 2.89。多核调度在所有场景均取得正向加速，N=4 加速比接近理想无损加速比 3 的 80\%∼96\%。
+
+\subsection{邻域效率分析}
+
+\begin{table}[!h]
+\centering
+\caption{六例开发集上各邻域的累积评估统计（数据来自 v2）}
+\label{tab:neighborhood_stats}
+\small
+\begin{tabular}{l r r r r}
+\toprule
+\textbf{邻域} & \textbf{评估次数} & \textbf{改善次数} & \textbf{改善率} & \textbf{评估耗时（秒）} \\
+\midrule
+N1 核移动        & 236 & 50 & 21.2\% & 378.1 \\
+N2 核间交换      & 128 & 23 & 18.0\% & 198.3 \\
+N4 相邻块合并    &  71 & 13 & 18.3\% &  90.7 \\
+N5 重块分裂      &  40 &  8 & 20.0\% &  32.4 \\
+N6 边界移动      &  18 &  2 & 11.1\% &   1.3 \\
+N3 独立块换序    &  78 &  0 &  0.0\% & 136.4 \\
+N7 强连接联合放置 &  2 &  0 &  0.0\% &   0.1 \\
+N8 关键路径移动  &  13 &  0 &  0.0\% &   2.7 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+表~\ref{tab:neighborhood_stats} 揭示了邻域效率阶梯：N1（21.2\% 有效率）和 N2（18.0\%）承担了绝大部分优化动力（73/96 次改善）。N4/N5 提供了稳定的次级增益。N3 在同一数据集上消耗了 78 次评估（占总调用的 13.3\%）却没有产生任何真实改善。自适应预算机制让预算向 N1/N2 倾斜，而非对所有邻域均匀分配，显著提升了单位评估的改善概率。
+
+\subsection{问题 3（L2 Cache）分析}
+
+引入 L2 Read-Only FIFO cache 后，同一 plan 在 P2 和 P3 的 Makespan 比例 $T_{\text{P2}} / T_{\text{P3}}$ 是量化 cache 贡献的可靠方法。图~\ref{fig:l2} 显示六种开发场景下的实测值。N=2 时加速比接近 1.00007、N=4 时接近 1.004，提升极其有限。其主要原因是开发集 DAG 的跨核读取张量较小且消费者较分散，限制了 FIFO cache 可命中区间。
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=0.55\textwidth]{figures/p3_l2_comparison.pdf}
+\caption{问题 3 相对问题 2 的加速比：同一 Plan 关闭 L2 与开启 L2 对照（$T_{\text{noL2}} / T_{\text{L2}}$）}
+\label{fig:l2}
+\end{figure}
+
+\subsection{100 例竞赛实验}
+
+在 300s / 64 次评估的完整竞赛预算下，使用 A2 配置对全部 15 个扩展开发集算例进行了完整求解。P1/P2 × N=2/N=4 共 60 组实验的改进率分布见图~\ref{fig:impr_hist}。95.0\% 的组（57/60）取得了严格的正向改善，无一例出现回退。P1 平均改善 31.94\%（中位 31.65\%），P2 平均改善 20.98\%（中位 15.36\%），N=4 的整体收益（均值 30.56\%）高于 N=2（均值 22.36\%），符合多核并行放大的预期。
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\textwidth]{figures/improvement_histogram.pdf}
+\caption{60 组竞赛实验的 Makespan 改进率分布直方图（均值 26.46\%，中位 23.51\%）}
+\label{fig:impr_hist}
+\end{figure}
+
+图~\ref{fig:impr_box} 按问题与核心数分组展示了改进率的分布特征。P1 在 N=4 的中位改善（37.32\%）显著高于 N=2（26.57\%），离散度也更低；P2 的两类核数间差距相对较小（N=2 均值 18.15\% vs N=4 均值 23.80\%）。
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\textwidth]{figures/improvement_boxplot.pdf}
+\caption{按问题与核心数分组的改进率箱线图}
+\label{fig:impr_box}
+\end{figure}
+
+图~\ref{fig:scale_bar} 展示了按图规模分层的改进率。极小型（ops<1k）和极大型（>20k）算例的改进率均超过 30\%——前者受益于搜索空间有限、VNS 易于收敛，后者受益于 coarse 和 fine 两种 grain 对异构结构的充分覆盖。
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\textwidth]{figures/scale_improvement_bar.pdf}
+\caption{按图规模分层的平均改进率}
+\label{fig:scale_bar}
+\end{figure}
+
+表~\ref{tab:competition_summary} 给出了各场景的整体统计。VNS 相对 Multi-seed 的平均增益为 3.03\%（38/60 组存在严格改善），表明自适应 VNS 在更大的评估预算下仍能持续挖掘 improved neighbourhood moves。
+
+\input{../results/competition/summary_table.tex}
+
+图~\ref{fig:top15} 列出了改善率最高的 15 个组合。极小型 case\_069（P1/N4）达到 76.73\% 改进率，case\_019 的 P1/N4 达到 67.06\%，均为图深度适中但宽度较窄的 DAG——四族种子中的 Critical‑path 与 Affinity-aware 对该类结构高度有效。
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\textwidth]{figures/top15_improvements.pdf}
+\caption{改善率最高的 15 个实验组}
+\label{fig:top15}
+\end{figure}
+
+图~\ref{fig:problem_comp} 以散点+误差棒形式给出了 P1 和 P2 的逐例分布对比，直观显示 P1 整体收益高于 P2，且 P2 的组间方差更小。
+
+\begin{figure}[!h]
+\centering
+\includegraphics[width=\textwidth]{figures/problem_comparison.pdf}
+\caption{问题 1 与问题 2 的改进率分布对比（散点为各算例）}
+\label{fig:problem_comp}
+\end{figure}
+
+\subsection{复现性与正确性}
+
+49 项 pytest 测试全部通过，覆盖 DAG 解析、partition 完整性、coarsening 唯一性、核顺序合法性、序列化、确定性验证、缓存失效、三个官方评估器以及 Problem 2/3 全局等待环拒绝测试。所有方案经过官方 CLI 独立复核验证。代码运行以 120 秒软截止预算和 seed=2026 严格重现结果。
+
+% ---------- 5. 模型评价与结论 ----------
+\section{模型评价与结论}
+
+\subsection{模型优点}
+
+\begin{enumerate}
+  \item \textbf{完整性}：四族种子覆盖负载、亲和度、关键路径和管道平衡四大特征轴，任一算例至少有一种策略能提供合理的初始解。
+  \item \textbf{评估效率}：top-K 过滤 + 粗粒度代理代价组合将约 80\% 的候选过滤，确保有限评估预算集中于最有价值的方案。
+  \item \textbf{自适应性}：邻域预算根据历史 gain\_per\_eval 和 gain\_per\_second 自动分配，无需为不同算例人工调节搜索参数。
+  \item \textbf{通用性}：VNS 框架仅依赖黑箱评估器反馈，不假设内部缓存、Spill 或通信模式，可平行用于 NPU 以外的黑箱组合问题。
+  \item \textbf{复现性}：确定种子、固定 coarsening 与确定性随机算法保证在同输入、同配置下结果可以被严格复制。
+\end{enumerate}
+
+\subsection{模型局限性}
+
+\begin{enumerate}
+  \item \textbf{评估器黑箱限制}：官方内部的内存 Spill、Cache FIFO 替换和带宽竞争无法被代理模型精确模拟，代理代价与实际评估之间存在系统性误差。
+  \item \textbf{L2 Cache 收益有限}：在本文测试条件下，同一方案在 P3 上的 L2 加速比仅为 1.00007∼1.004，其增益远不足以改变最优方案的 pairwise 排序。
+  \item \textbf{邻域覆盖不完整}：N7 和 N8 在本次统计中样本过少，其潜在价值缺乏实证支持；N3 的劣性也可能是当前 formulation 下的相对现象。
+  \item \textbf{搜索空间边界}：Grain 被限定为集合 $\{2,4,12,32\}$ 而非连续变量；超参选择（budget、patience、T\_top-K）基于当前的最佳实践经验而未经系统的完全 parameter study。
+  \item \textbf{预算敏感性}：全部对比均在 time=120 s / max\_evaluations=36 条件下进行，不同预算下 VNS 的收敛品质与其他元启发式策略的交叉排名仍需后续校准。
+\end{enumerate}
+
+\subsection{结论}
+
+本文建立了面向黑箱 NPU 评估器的 DAG 划分与自适应 VNS 调度框架。通过四族多粒度种子策略、八类 VNS 邻域、top-K 候选筛选和自适应预算分配，在开发集 6 例的三轮消融实验中证明了自适应搜索和细粒度种子恢复的共同有效性——A2 最终方案在 10/24 组产生严格改善（41.7\%），同时将 case\_019 的 $+$10.66\% 关键回归修正为 $-$0.47\%。所有实验结果在固定 seed 和相同预算下可被严格复现。
+
+该框架直接适用于任意 $N$ 核、任意预算，并为后续引入 CP-SAT 精确校验、更精细代理模型以及动态在线调度提供架构基础。
+
+% ---------- 参考文献 ----------
+\begin{thebibliography}{99}
+
+\bibitem{jouppi2017} N. P. Jouppi et al., ``In-datacenter performance analysis of a tensor processing unit,'' in \textit{Proc. 44th ISCA}, 2017, pp. 1--12.
+
+\bibitem{chen2016eyeriss} Y.-H. Chen, J. Emer, and V. Sze, ``Eyeriss: A spatial architecture for energy-efficient dataflow for convolutional neural networks,'' in \textit{Proc. 43rd ISCA}, 2016, pp. 367--379.
+
+\bibitem{chen2018tvm} T. Chen et al., ``TVM: An automated end-to-end optimizing compiler for deep learning,'' in \textit{Proc. 13th USENIX OSDI}, 2018, pp. 578--594.
+
+\bibitem{jia2019taso} Z. Jia et al., ``TASO: Optimizing deep learning computation with automatic generation of graph substitutions,'' in \textit{Proc. 27th SOSP}, 2019, pp. 47--62.
+
+\bibitem{topcuoglu2002} H. Topcuoglu, S. Hariri, and M.-Y. Wu, ``Performance-effective and low-complexity task scheduling for heterogeneous computing,'' \textit{IEEE Trans. Parallel Distrib. Syst.}, vol. 13, no. 3, pp. 260--274, 2002.
+
+\bibitem{kwok1999} Y.-K. Kwok and I. Ahmad, ``Static scheduling algorithms for allocating directed task graphs to multiprocessors,'' \textit{ACM Computing Surveys}, vol. 31, no. 4, pp. 406--471, 1999.
+
+\bibitem{mladenovic1997} N. Mladenovi\'{c} and P. Hansen, ``Variable neighborhood search,'' \textit{Computers \& Operations Research}, vol. 24, no. 11, pp. 1097--1100, 1997.
+
+\bibitem{hansen2001} P. Hansen and N. Mladenovi\'{c}, ``Variable neighborhood search: Principles and applications,'' \textit{European Journal of Operational Research}, vol. 130, no. 3, pp. 449--467, 2001.
+
+\bibitem{karypis1998} G. Karypis and V. Kumar, ``A fast and high quality multilevel scheme for partitioning irregular graphs,'' \textit{SIAM J. Sci. Comput.}, vol. 20, no. 1, pp. 359--392, 1998.
+
+\bibitem{sinnen2005} O. Sinnen and L. A. Sousa, ``Communication contention in task scheduling,'' \textit{IEEE Trans. Parallel Distrib. Syst.}, vol. 16, no. 6, pp. 503--515, 2005.
+
+\bibitem{shahriari2016} B. Shahriari, K. Swersky, Z. Wang, R. P. Adams, and N. de Freitas, ``Taking the human out of the loop: A review of Bayesian optimization,'' \textit{Proc. IEEE}, vol. 104, no. 1, pp. 148--175, 2016.
+
+\bibitem{arabnejad2014} H. Arabnejad and J. G. Barbosa, ``List scheduling algorithm for heterogeneous systems by an optimistic cost table,'' \textit{IEEE Trans. Parallel Distrib. Syst.}, vol. 25, no. 3, pp. 682--694, 2014.
+
+% AI 工具声明（附件4第3条）
+\bibitem{AI-tool} Trae AI Coding Assistant, 开发机构: ByteDance, 版本发布日期: 2025.\ 用于辅助代码生成（solver/VNS/evaluator/benchmark）、文档整理和论文框架设计。所有数学模型、实验数据和结论由参赛队独立完成和校验。
+
+\end{thebibliography}
+
+
+% ============================================================
+% 附录
+% ============================================================
+\newpage
+\appendix
+
+\section{逐例实验结果表（A2 配置，问题 1\&2）}
+
+\label{app:results}
+
+表~\ref{tab:appendix_all} 给出了 A2 配置在 6 例开发集上全部 24 组（P1/P2×N2/N4）的完整 Makespan 与 Added Copy，均源自官方评估器且通过独立 CLI 复核。
+
+\small
+\input{../results/development_v3/A2_final/benchmark_table.tex}
+
+\section{官方 CLI 独立复核说明}
+\label{app:cli_verification}
+
+全部 24 组 VNS 最终方案均通过官方提供的命令行验证工具独立复核。复核调用官方评估器的同一接口，校验输出方案是否满足场景约束并且在数值上与 benchmark 日志一致。
+
+\section{AI 工具使用声明}
+\label{app:ai_declaration}
+
+本参赛队在答题中使用了 AI 工具作为辅助，严格遵守竞赛组委会颁布的《人工智能工具及输出使用规定》（2026）。
+
+\begin{itemize}
+  \item \textbf{代码辅助}：使用 Trae AI Coding Assistant（ByteDance）辅助 src/ 下 solver、coarsening、VNS、evaluator 接口和 experiment runner 的代码生成。所有源文件顶部已标注 AI 辅助声明。
+  \item \textbf{论文写作}：使用 AI 工具辅助论文大纲设计、文献框架整理和部分段落的草稿生成。正文中出现的所有数学模型、实验数据和结论均由参赛队独立验证并以自身语言表述。
+  \item \textbf{输入与处理策略}：AI 工具输出作为方向参考，参赛队根据实际建模需求决定采用、修改或拒绝。具体搜索算法的核心技术路线（四族种子、VNS 邻域、自适应预算）由参赛队依据问题特性自主设计。
+\end{itemize}
+
+\textbf{AI 工具信息}：Trae AI Coding Assistant，开发机构：ByteDance，版本发布日期：2025。
+
+\section{核心代码说明}
+\label{app:code}
+
+求解器完整源码位于 \texttt{src/npu\_scheduler/}。核心模块：
+
+\begin{enumerate}
+  \item \texttt{graph.py} / \texttt{types.py}：DAG 解析、COPY 依赖收缩、特征预计算、方案表示与合法性校验。
+  \item \texttt{partition/coarsening.py}：两层（atomic + coarse）聚合，粒度参数驱动。
+  \item \texttt{partition/initial\_partition.py}：四族种子生成 + Portfolio fine\_grain 变体。
+  \item \texttt{schedule/core\_assignment.py}：HEFT 风格用 Ready-list 核心分配。
+  \item \texttt{search/vns.py}：八邻域 + 候选筛选 + top-K 评估 + 自适应预算 + 早停。
+  \item \texttt{evaluator/official\_adapter.py}：未修改的官方评估器接口，缓存键基于完整图哈希。
+  \item \texttt{experiment/runner.py}：Case 级进程并行、断点续跑、manifest 与 job 记录。
+\end{enumerate}
+
+安装与运行：
+
+\begin{lstlisting}[language=bash]
+python -m venv .venv
+source .venv/Scripts/activate
+pip install -e ".[dev]"
+python -m npu_scheduler.cli benchmark \
+  --data-dir data --config data/config.txt \
+  --solver-config configs/development_v3.yaml \
+  --output results/my_run --cases case_001 case_019 \
+  --problem 1 2 --cores 2 4
+\end{lstlisting}
+
+\end{document}

@@ -1,0 +1,3 @@
+data movement: scheduled_copy_bytes=8438784, physical_ddr_bytes=8438784
+OK: problem 1 makespan=2435650; result=D:\BAKFILE\9017530\huawei_cup_2026\problem_A\results\development_v3\A2_final_verified\case_025_p1_n2\cli\result.json
+
