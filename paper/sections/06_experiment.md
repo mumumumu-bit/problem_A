@@ -72,11 +72,11 @@ $$
 
 <!-- Evidence: code/singlecore_evaluate.py；results/singlecore_full100/singlecore.csv；scripts/final_visualization.py；paper/EVIDENCE_MAP.md F -->
 
-## 6.4 P3共享L2 Cache比较口径
+## 6.4 P3共享只读L2 Cache比较口径
 
-**N=1：逐case固定计划配对。** `results/p3_singlecore_full100/p3_n1_l2.csv`覆盖100个不同case且无重复、无缺失。根据正式配对记录，每个case的no-Cache评估与共享L2 Cache评估使用同一plan，paired-plan一致100/100、不一致0、缺失0；文件中的单个 `plan_sha256` 对应该case用于两种评估的固定计划。这里的“paired”是case内配对，不表示100个case共用同一个plan；文件中有99个不同plan hash，不同case使用不同plan是正常的。该文件记录的逐case `l2_speedup` 按 no-Cache makespan / 共享L2 Cache makespan 计算（已逐行核对），正式汇总使用该字段并对100个case求算术平均。
+**N=1：逐case固定计划配对。** `results/p3_singlecore_full100/p3_n1_l2.csv`覆盖100个不同case且无重复、无缺失。根据正式配对记录，每个case的no-Cache评估与共享只读L2 Cache评估使用同一plan，paired-plan一致100/100、不一致0、缺失0；文件中的单个 `plan_sha256` 对应该case用于两种评估的固定计划。这里的“paired”是case内配对，不表示100个case共用同一个plan；文件中有99个不同plan hash，不同case使用不同plan是正常的。该文件记录的逐case `l2_speedup` 按 no-Cache makespan / 共享只读L2 Cache makespan 计算（已逐行核对），正式汇总使用该字段并对100个case求算术平均。
 
-**N=2至5：正式VNS结果间比较，不是same-plan配对。** 每个case的no-Cache makespan取该核数下P2的VNS正式结果；共享L2 Cache makespan取对应P3的VNS正式结果。逐case比值为
+**N=2至5：正式VNS结果间比较，不是same-plan配对。** 每个case的no-Cache makespan取该核数下P2的VNS正式结果；共享只读L2 Cache makespan取对应P3的VNS正式结果。逐case比值为
 
 $$
 S^{\mathrm{P3/P2}}_{i,N}=\frac{T^{\mathrm{P2,VNS}}_{i,N}}{T^{\mathrm{P3,VNS}}_{i,N}},\qquad N\in\{2,3,4,5\},

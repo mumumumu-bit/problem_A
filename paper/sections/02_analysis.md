@@ -20,6 +20,6 @@
 
 ## 2.4 问题三分析
 
-问题三在问题二的跨核执行模型上增加所有核心共享的只读L2 Cache（以下简称共享L2 Cache）。`COPY_IN` 的数据读取可能由Cache服务，也可能需要从DDR读取；未命中后的更新和淘汰遵循FIFO规则，因此命中情况还受此前访问及Cache状态影响，不能仅由静态图划分判断。Makespan反映该场景下的正式执行时间，Cache命中率可用于观察访问覆盖情况，但不是本文求解器的优化目标。求解器仍按第4章定义的正式目标比较方案，Cache路径和命中统计则由问题三的官方 Evaluator 处理；因此本文不把方法描述为Cache-aware partition。
+问题三在问题二的跨核执行模型上增加共享只读L2 Cache。`COPY_IN` 的数据读取可能由Cache服务，也可能需要从DDR读取；未命中后的更新和淘汰遵循FIFO规则，因此命中情况还受此前访问及Cache状态影响，不能仅由静态图划分判断。Makespan反映该场景下的正式执行时间，Cache命中率可用于观察访问覆盖情况，但不是本文求解器的优化目标。求解器仍按第4章定义的正式目标比较方案，Cache路径和命中统计则由问题三的官方 Evaluator 处理；因此本文不把方法描述为Cache-aware partition。
 
 <!-- Evidence: 2026官方A题1.2—1.5、问题1—3、附录D；方法与执行规则分别据 paper/EVIDENCE_MAP.md A—C 及 paper/sections/03_assumptions_symbols.md、04_model.md、05_algorithm.md。 -->

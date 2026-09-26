@@ -62,13 +62,13 @@ P3两配置逐例数据遵循6.4口径，单核固定plan与多核分别求解�
 
 # 5. PDF冻结阻塞与程序附件分流
 
-统一审计见 `paper/PDF_BLOCKERS.md`，按独立关闭工作项计 **9项PDF冻结阻塞**：AI元数据、实际采用范围、团队理解核验与自身表述、分析结果就近注释、两处旧P3术语、旧稿隔离、Framework图成品、图表引用组装、最终格式清稿验收。
+统一审计见 `paper/PDF_BLOCKERS.md`。原9项中A5旧P3术语、A6旧稿纳入边界已 resolved；A8图表组装规划已 resolved，实际组装尚未完成。按独立关闭工作项计，当前剩余 **7项PDF冻结阻塞**：AI元数据、实际采用范围、团队理解核验与自身表述、分析结果就近注释、Framework图成品、图表引用实际组装、最终格式清稿验收。
 
 允许开始Word结构与排版组装；当前不允许冻结或提交PDF。A/B/C内容已有，附录D仍需真实记录核验，不能靠删除标记声明合规。
 
 附录A的程序打包占位及附录D程序代码头模板已转移至 `paper/PROGRAM_PACKAGE_TODO.md`，不再列为纯PDF阻塞。程序附件仍须完成：压缩包、目录、README、命令、依赖/环境、归档工具及指纹对应、代码头声明与交付验证。若PDF实际收入代码，其前置AI注释须随代码落实。
 
-本次发现并仅报告：03章15行“只读 FIFO Cache”、04章163行“FIFO Cache状态”；main.tex保留旧top-2、17.74%、2.42/2.89等；旧outline.md为6章，不能混入冻结10章结构。Framework A/B/D锚点完整，仓库仅见mmd源文件，未检出对应成品图像。8张正式结果图已存在。没有发现正式表内容缺失或新的文献引用占位。
+本轮已修复03章15行、04章163行旧P3称谓，正式文字来源统一使用共享只读L2 Cache，FIFO仅作规则描述。`paper/WORD_INCLUDE_MANIFEST.md`明确A类正式纳入、B类内部审计、C类程序附件、D类历史文件；旧main.tex/main.pdf、6章outline及旧规划/结果说明均原地保留而不纳入Word。Framework A/B/D锚点完整，目前只有spec/mermaid，成品仍未完成。8张正式结果图已存在，唯一图表位置与来源已在manifest中固定。
 
 正文7个正式图锚点及附录B4个图锚点须转真实图片；正文10章2个注释内锚点只作内部引用提示。15份TSV须实际组装为附表。内部审计、Evidence、caption建议、历史PLACEHOLDER/TBD及未完成核验标记不得进入最终PDF。
 
@@ -76,7 +76,7 @@ AI元数据统一使用EXTERNAL-VERIFY-REQUIRED；团队操作使用VERIFY-BEFOR
 
 # 6. Word整稿注意事项
 
-- 图、表位置以本清单与FIGURE_PLAN唯一映射为准，不新增图表分支。
+- 纳入文件及图表操作以WORD_INCLUDE_MANIFEST唯一执行表为准，与本清单、OUTLINE_V1及FIGURE_PLAN一致；这些内部规划文件本身不进入Word。
 - 正文10.2保留“详细探索结果见附录C。”附录C完整组装后该交叉引用必须能定位。
 - 表1、硬件参数表及表4(b)补正式编号/首引；表2首引已经完成。SA采用附表C1。
 - 公式保持可编辑，检查变量定义、分段式、上下标与编号；本轮未改模型或公式。
@@ -99,7 +99,10 @@ AI元数据统一使用EXTERNAL-VERIFY-REQUIRED；团队操作使用VERIFY-BEFOR
 - [x] 附录D五节框架完成，未确认元数据保留EXTERNAL-VERIFY-REQUIRED，人工事项保留VERIFY-BEFORE-PDF。
 - [x] 纯程序打包占位和程序代码头模板已转移PROGRAM_PACKAGE_TODO.md；实际程序附件交付仍未完成，独立于PDF冻结。
 - [ ] AI实际版本信息、发布日期、历史用途与人工核验完成；结果处注释落实，关闭PDF内EXTERNAL-VERIFY-REQUIRED和VERIFY-BEFORE-PDF。程序代码头按附件清单落实，PDF收录代码时同步检查。
-- [ ] PDF_BLOCKERS的A1—A9逐项关闭，包括旧P3术语及Framework真实图片。
+- [x] A5旧P3术语清理 resolved，官方硬件名称统一，FIFO仅说明规则。
+- [x] A6旧稿纳入边界 resolved，WORD_INCLUDE_MANIFEST的A/B/C/D分类完成，历史文件未删除。
+- [x] A8图表组装规划 resolved，唯一位置、来源及子表方案固定；实际组装仍待执行。
+- [ ] PDF_BLOCKERS剩余A1—A4、A7—A9逐项关闭；Framework成品仍未完成。
 - [ ] 公式与变量定义经Word/PDF逐式检查，正式数字和统计口径不改变。
 - [ ] 摘要与参考文献只提取正式内容，内部审核信息不进入PDF。
 - [ ] 排除旧数字、旧术语、内部说明与未转换锚点；检查正文/附录内容重复。
