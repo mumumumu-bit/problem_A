@@ -42,7 +42,7 @@ try {
         foreach ($Job in $Jobs) {
             $taskName = "{0}_p{1}_n{2}" -f $Job.Case, $Job.Problem, $Job.Cores
             $taskOutput = Join-Path $OutputRoot ("{0}\{1}" -f $Arm.Name, $taskName)
-            if (Test-Path -LiteralPath (Join-Path $taskOutput $taskName "job.json")) {
+            if (Test-Path -LiteralPath (Join-Path (Join-Path $taskOutput $taskName) "job.json")) {
                 Write-Host "Skipping completed task: seed=$Seed arm=$($Arm.Name) task=$taskName"
                 continue
             }
