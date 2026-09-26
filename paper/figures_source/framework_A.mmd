@@ -1,0 +1,48 @@
+flowchart LR
+  subgraph IN[输入]
+    G[计算图 G]
+    HW[硬件配置]
+    SC[问题场景 P1 / P2 / P3]
+  end
+
+  PRE[图特征预计算]
+
+  subgraph SEED[Seed阶段]
+    BASE[Baseline<br/>seed阶段起始候选]
+    FAM[多粒度候选生成<br/>balanced · affinity · critical · pipe<br/>grains 4/12/32；fine-grain=2候选变体]
+    ASSIGN[HEFT-style核分配]
+    SEVAL[Seed候选逐个调用官方Evaluator]
+    INC[严格目标比较<br/>当前best-so-far]
+  end
+
+  subgraph VNS[VNS邻域搜索]
+    POOL[候选池<br/>最多48个合法唯一候选]
+    RANK[启发式排序]
+    TOP[Top-K<br/>最多3个]
+    VEVAL[官方Evaluator]
+    DESC{是否严格改善？}
+    ADAPT[更新邻域统计<br/>adaptive选择/停止]
+  end
+
+  OUT[各场景分别得到最终调度方案]
+  E1[P1官方评价结果]
+  E2[P2官方评价结果]
+  E3[P3官方评价结果]
+
+  G --> PRE
+  HW --> PRE
+  SC --> PRE
+  PRE --> BASE
+  PRE --> FAM
+  BASE --> ASSIGN
+  FAM --> ASSIGN
+  ASSIGN --> SEVAL --> INC
+  INC --> POOL
+  POOL --> RANK --> TOP --> VEVAL --> DESC
+  DESC -- 是：更新incumbent --> ADAPT
+  DESC -- 否：保持当前解 --> ADAPT
+  ADAPT -- 继续 --> POOL
+  ADAPT -- 停止 --> OUT
+  OUT --> E1
+  OUT --> E2
+  OUT --> E3

@@ -1,0 +1,29 @@
+flowchart LR
+  subgraph BASE[P2基础执行语义]
+    CORE[计算核 / 按核Task]
+    COPYOUT[COPY_OUT]
+    COPYIN[COPY_IN读取请求]
+    CORE --> COPYOUT
+    CORE --> COPYIN
+  end
+
+  subgraph P3[P3只读FIFO Cache读取路径]
+    LOOKUP[只读FIFO Cache查询<br/>仅COPY_IN可查询]
+    HIT{数据命中？}
+    CACHE[Cache读取路径<br/>对应Cache带宽]
+    DDR[DDR读取]
+    FILL[读取完成后按FIFO规则更新Cache]
+    EVICT[容量不足时FIFO淘汰]
+    ORDER[命中不刷新FIFO顺序]
+    COPYIN --> LOOKUP --> HIT
+    HIT -- 命中 --> CACHE
+    HIT -- 未命中 --> DDR --> FILL
+    FILL --> EVICT
+    CACHE -.不改变FIFO顺序.-> ORDER
+  end
+
+  EVAL[官方Evaluator统计<br/>Makespan · Added Copy · Cache Hit Rate]
+  NOTE[Cache Hit Rate是评价指标<br/>不是正式优化目标]
+  CACHE --> EVAL
+  DDR --> EVAL
+  EVAL --> NOTE

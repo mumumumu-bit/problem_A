@@ -1,0 +1,48 @@
+flowchart LR
+  IN[输入：图特征、场景与核数]
+
+  subgraph S[第一阶段：Seed]
+    BASE[Baseline候选]
+    FAM[四类family + 多grain候选<br/>fine-grain=2为候选变体]
+    ASSIGN[HEFT-style核分配]
+    DEDUP[digest去重]
+    EVAL[官方Evaluator<br/>唯一seed候选逐个评价]
+    CMP[严格目标比较<br/>(Makespan, Added Copy)]
+    INC[Seed阶段incumbent]
+    BASE --> ASSIGN
+    FAM --> ASSIGN --> DEDUP --> EVAL --> CMP --> INC
+  end
+
+  subgraph V[第二阶段：VNS]
+    SELECT[选择邻域]
+    GEN[生成最多48个<br/>合法、唯一、未评价候选]
+    RANK[启发式估计与排序]
+    TOP[Top-K=3]
+    VEVAL[官方Evaluator]
+    IMP{官方目标是否严格改善？}
+    UPDATE[更新best-so-far<br/>并更新邻域统计]
+    KEEP[保持当前best-so-far<br/>并更新邻域统计]
+    CTRL[adaptive邻域选择/停止判断]
+    OUT[继续下一轮或输出best-so-far]
+    SELECT --> GEN --> RANK --> TOP --> VEVAL --> IMP
+    IMP -- 是 --> UPDATE --> CTRL
+    IMP -- 否 --> KEEP --> CTRL
+    CTRL -- 继续 --> SELECT
+    CTRL -- 停止 --> OUT
+  end
+
+  IN --> BASE
+  IN --> FAM
+  INC --> SELECT
+
+  subgraph N[邻域动作（侧栏）]
+    N1[N1 重块优先换核]
+    N2[N2 两块核归属交换]
+    N3[N3 相邻无直接依赖块重排]
+    N4[N4 相邻块合并]
+    N5[N5 按工作量近半拆分]
+    N6[N6 边界节点右移]
+    N7[N7 高通信量连接块对优先同核]
+    N8[N8 关键块优先换核]
+  end
+  SELECT -.从邻域动作中选取.-> N
