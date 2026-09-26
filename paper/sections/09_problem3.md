@@ -1,24 +1,24 @@
-# 9 问题三只读FIFO Cache求解与结果分析
+# 9 问题三共享L2资源下的多核切图与调度
 
-## 9.1 只读FIFO Cache场景建模落地
+## 9.1 共享只读L2 Cache场景建模落地
 
-依据第4章模型和第5章算法求解问题三，并沿用第6章正式配置。P3在Scene B的按核Task与跨核COPY规则基础上，为COPY_IN增加只读FIFO Cache读取路径；命中走Cache读取带宽，未命中从DDR读取并在完成后按FIFO规则更新Cache，命中不刷新FIFO顺序。Cache容量和访问行为由官方Evaluator处理，最终候选仍按Makespan、Added Copy的字典序目标比较。正式solver没有启用Cache相关候选估计权重，本文不将其描述为Cache-aware划分算法。
+依据第4章模型和第5章算法求解问题三，并沿用第6章正式配置。P3在Scene B的按核Task与跨核COPY规则基础上，为COPY_IN增加共享只读L2 Cache读取路径；命中走Cache读取带宽，未命中从DDR读取并在完成后按FIFO规则更新Cache，命中不刷新FIFO顺序。Cache容量和访问行为由官方Evaluator处理，最终候选仍按Makespan、Added Copy的字典序目标比较。正式solver没有启用Cache相关候选估计权重，本文不将其描述为Cache-aware划分算法。
 
 <!-- Evidence: paper/EVIDENCE_MAP.md A、B、C、D；paper/sections/04_model.md 4.2.3、4.4；paper/sections/05_algorithm.md 5.4.3；paper/sections/06_experiment.md 6.2、6.4 -->
 
-为保持术语一致，正文使用“只读FIFO Cache”。现有图4、图5文件名中的“L2”是团队概括性简称，不表示另行确认的官方硬件层级。
+本章以官方术语“共享只读L2 Cache”指称该硬件资源；“FIFO”仅用于说明其访问状态更新和替换规则。图4、图5文件名中的“L2”与题面术语一致。
 
 ## 9.2 N=1同计划配对实验
 
-N=1实验覆盖100个case，每个case的no-Cache与只读FIFO Cache评估使用同一个plan，paired-plan一致100/100、不一致0、缺失0。不同case之间计划可以不同；该实验是逐case固定调度计划后比较两种执行机制，而不是100个case共用一个计划。
+N=1实验覆盖100个case，每个case的no-Cache与共享L2 Cache评估使用同一个plan，paired-plan一致100/100、不一致0、缺失0。不同case之间计划可以不同；该实验是逐case固定调度计划后比较两种执行机制，而不是100个case共用一个计划。
 
 <!-- Evidence: paper/EVIDENCE_MAP.md G；paper/sections/06_experiment.md 6.4；正式P3 N1配对记录 -->
 
-图4展示各核数下no-Cache与只读FIFO Cache的平均Makespan，其中N=1来自上述固定计划配对，N=2至5来自下一节的正式场景比较。N=1时，no-Cache平均Makespan为3124794周期，Cache版本为3116693周期（均按正式摘要的整数显示值报告）；平均逐case Speedup为1.0086。该1.0086先对100个case分别计算no-Cache makespan / Cache makespan，再对100个比值求平均；它不是3124794 / 3116693这一对平均Makespan的商。
+图4展示各核数下no-Cache与共享L2 Cache的平均Makespan，其中N=1来自上述固定计划配对，N=2至5来自下一节的正式场景比较。N=1时，no-Cache平均Makespan为3124794周期，共享L2 Cache版本为3116693周期（均按正式摘要的整数显示值报告）；平均逐case Speedup为1.0086。该1.0086先对100个case分别计算no-Cache makespan / 共享L2 Cache makespan，再对100个比值求平均；它不是3124794 / 3116693这一对平均Makespan的商。
 
 [FIGURE: fig4_p3_noL2_vs_L2]
 
-<!-- 推荐caption：图4 no-Cache与只读FIFO Cache的平均Makespan。N=1为100-case固定plan配对；N=2至5分别取P2 VNS与P3 VNS结果，属于独立求解的场景比较。首次完整插图置于9.2，9.3仅引用。 -->
+<!-- 推荐caption：图4 no-Cache与共享L2 Cache的平均Makespan。N=1为100-case固定plan配对；N=2至5分别取P2 VNS与P3 VNS结果，属于独立求解的场景比较。首次完整插图置于9.2，9.3仅引用。 -->
 
 表4(b) 核心结果汇总：P3比较指标
 
@@ -56,7 +56,7 @@ N=1实验覆盖100个case，每个case的no-Cache与只读FIFO Cache评估使用
 
 [FIGURE: fig5_p3_l2_speedup]
 
-<!-- 推荐caption：图5 平均no-Cache/只读FIFO Cache比值及平均Cache命中率。比值为逐case比值的算术平均；N=1固定plan，N=2至5分别采用P2/P3 VNS结果。命中率是官方评价指标，不参与solver目标。首次完整插图置于9.4。 -->
+<!-- 推荐caption：图5 平均no-Cache/共享L2 Cache比值及平均Cache命中率。比值为逐case比值的算术平均；N=1固定plan，N=2至5分别采用P2/P3 VNS结果。命中率是官方评价指标，不参与solver目标。首次完整插图置于9.4。 -->
 
 **数据直接支持的事实。** 在已测核数上，平均命中率从0.0920增长至0.2973；N=2～5的平均逐case比值1.0068→1.0136→1.0152→1.0259单调上升。纳入N=1的1.0086后，整体并非严格单调，因为N=2略低于N=1。以上均为集合均值，不能推出case级命中率分布、所有case的一致关系或统计显著性。
 
@@ -66,6 +66,6 @@ N=1实验覆盖100个case，每个case的no-Cache与只读FIFO Cache评估使用
 
 ## 9.5 本问小结
 
-N=1固定plan配对得到平均no-Cache/Cache比值1.0086；N=2至5分别求解的正式P2/P3场景比较得到1.0068、1.0136、1.0152、1.0259。两类实验共同给出只读FIFO Cache场景的正式性能与命中统计，但解释范围不同：前者固定case内计划，后者包含场景下求解方案的变化，不能作为same-plan的Cache独立贡献对照。
+N=1固定plan配对得到平均no-Cache/共享L2 Cache比值1.0086；N=2至5分别求解的正式P2/P3场景比较得到1.0068、1.0136、1.0152、1.0259。两类实验共同给出共享L2 Cache场景的正式性能与命中统计，但解释范围不同：前者固定case内计划，后者包含场景下求解方案的变化，不能作为same-plan的Cache独立贡献对照。
 
 <!-- Evidence: results/final_visualization/figure_numbers.md；paper/EVIDENCE_MAP.md E、G；paper/sections/06_experiment.md 6.4 -->

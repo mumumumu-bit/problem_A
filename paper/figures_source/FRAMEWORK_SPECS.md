@@ -42,24 +42,24 @@
 9. **对应正文位置**：第5章5.1，作为Algorithm 1的流程图对应图；避免重复绘制Framework A全局主线。
 10. **Evidence来源**：`paper/EVIDENCE_MAP.md` C、D；`paper/sections/05_algorithm.md` 5.1、5.3、5.5、5.6、5.7及Algorithm 1。
 
-## Framework D：P3只读FIFO Cache访问机制
+## Framework D：P3共享只读L2 Cache访问机制
 
-1. **图目的**：展示P3相对P2执行模型新增的只读FIFO Cache读取路径，区分Cache查询、命中路径和DDR未命中路径。
+1. **图目的**：展示P3相对P2执行模型新增的所有核心共享的只读L2 Cache（以下简称共享L2 Cache）读取路径，区分Cache查询、命中路径和DDR未命中路径。
 2. **推荐画布方向**：横向数据路径；计算核/COPY事件在左，Cache与DDR在中部，评价输出在右；FIFO状态更新在Cache框下方。
 3. **所有节点**：
    - P2基础执行路径提示：按核Task及跨核COPY_IN/COPY_OUT由官方执行规则构造（简洁标注，不展开成solver模块）。
    - 计算核/发起端。
    - COPY_IN读取请求。
-   - 只读FIFO Cache查询及命中/未命中判断。
+   - 共享L2 Cache查询及命中/未命中判断（只读）。
    - 命中：Cache读取路径及对应Cache带宽。
    - 未命中：DDR读取路径；读取完成后按FIFO规则更新Cache；若容量不足则FIFO淘汰。
    - 命中不刷新FIFO顺序的注释。
    - 官方Evaluator结果：Makespan、Added Copy、Cache Hit Rate（评价指标；不是优化目标）。
-4. **所有箭头**：计算核/执行端→COPY_IN读取请求→Cache查询；命中→Cache读取路径→读取完成；未命中→DDR读取→读取完成→FIFO Cache写入/状态更新→（容量不足时）FIFO淘汰→后续请求状态；读取/执行事件→官方Evaluator→结果字段。只将COPY_IN连接到Cache查询。COPY_OUT只作为P2基础场景标识，不连入Cache查询。
-5. **分组/泳道**：P2基础执行语义（窄标题带）；P3只读Cache读取路径；DDR；官方Evaluator输出。Cache容量作为固定硬件参数注释放在Cache框旁，不画为决策节点。
-6. **图中必须出现的文字**：“仅COPY_IN查询Cache”“只读FIFO Cache”“命中→Cache读取带宽”“未命中→DDR读取”“读取完成后按FIFO规则更新”“容量不足时FIFO淘汰”“命中不刷新FIFO顺序”“Cache Hit Rate为评价指标，非优化目标”“Cache容量由正式配置给定”。
+4. **所有箭头**：计算核/执行端→COPY_IN读取请求→共享L2 Cache查询；命中→Cache读取路径→读取完成；未命中→DDR读取→读取完成→按FIFO规则更新Cache状态→（容量不足时）FIFO淘汰→后续请求状态；读取/执行事件→官方Evaluator→结果字段。只将COPY_IN连接到Cache查询。COPY_OUT只作为P2基础场景标识，不连入Cache查询。
+5. **分组/泳道**：P2基础执行语义（窄标题带）；P3共享只读L2 Cache读取路径；DDR；官方Evaluator输出。Cache容量作为固定硬件参数注释放在Cache框旁，不画为决策节点。
+6. **图中必须出现的文字**：“所有核心共享的只读L2 Cache”“仅COPY_IN查询Cache”“命中→Cache读取带宽”“未命中→DDR读取”“读取完成后按FIFO规则更新”“容量不足时FIFO淘汰”“命中不刷新FIFO顺序”“Cache Hit Rate为评价指标，非优化目标”“Cache容量由正式配置给定”。
 7. **图中禁止出现的文字**：“可写Cache”“写回”“命中刷新/LRU/LFU”“预取”“solver主动替换/优化Cache容量”“Cache-aware partition”“所有访问均可命中”“cache_weight启用Cache机制”。可在图注或规格中说明正式solver的`cache_weight=0`；不建议将代码变量名放入图面。
-8. **推荐caption**：图X P3只读FIFO Cache访问路径。仅COPY_IN请求查询Cache；命中走Cache读取路径，未命中从DDR读取并在读取完成后按FIFO规则更新状态，Cache命中率由官方Evaluator统计。
+8. **推荐caption**：图X P3共享只读L2 Cache访问路径。仅COPY_IN请求查询Cache；命中走Cache读取路径，未命中从DDR读取并在读取完成后按FIFO规则更新状态，Cache命中率由官方Evaluator统计。
 9. **对应正文位置**：第4章4.2.3（机制定义）；第9章P3结果部分可引用，不重复画机制图。
 10. **Evidence来源**：`paper/EVIDENCE_MAP.md` A（P3相对P2增加、Cache容量/带宽、COPY机制）、B（Cache Hit Rate指标与非优化目标）、D（正式solver cache_weight=0）；`paper/sections/04_model.md` 4.2.2、4.2.3、4.4.3、4.5；`paper/sections/05_algorithm.md` 5.4.3。
 

@@ -28,9 +28,9 @@
 | 原始计算图 | `data/case_001.json`至`case_100.json`；`src/npu_scheduler/graph.py`；`code/evaluation_validation.py` | 图由ops、tensors、edges组成；求解器图视图排除COPY_IN/COPY_OUT，再将其作为边界机制交给官方评估器。 | 是，A | 具体某个case的规模应引用对应数据文件，不引用旧论文数字。 |
 | P1 / Scene A | `code/multicore_cut_evaluate_problem_1.py` | 每个子图封装为独立Task；Task边界插入DDR COPY；跨Task依赖使用跨核等待；官方返回makespan和数据搬运。 | 是，A | 不应把P1描述成“仅核内调度”或忽略边界COPY。 |
 | P2 / Scene B | `code/multicore_cut_evaluate_problem_2.py` | 每核合并为一个Task；同核tensor片上直接通信；跨核边插入COPY_OUT/COPY_IN；跨核COPY等待来自`data/config.txt`。 | 是，A | 具体COPY字节数必须来自正式结果。 |
-| P3相对P2的增加 | `code/multicore_cut_evaluate_problem_3.py`；`docs/多核并行模拟执行算法.md` | P3在Scene B执行模型上增加只读 FIFO Cache；只有COPY_IN可查询Cache；命中使用Cache带宽，未命中从DDR读取；命中不会改变FIFO顺序。 | 是，A | “FIFO Cache”和代码中的`read_only` Cache是实现/正式说明中的名称；“共享只读L2”或“readonly L2”是论文/团队概括性称呼，不应写成官方原词或额外硬件断言。 |
+| P3相对P2的增加 | 仓库根目录`通用神经网络处理器下的多核调度问题.docx`（官方题面）1.5、问题3；`code/multicore_cut_evaluate_problem_3.py`；`docs/多核并行模拟执行算法.md` | 官方题面将问题3表述为“共享L2资源下的多核切图与调度”，并规定在场景B基础上加入所有核心共享的只读L2 Cache；实现中只有COPY_IN可查询，命中使用Cache带宽，未命中从DDR读取并按FIFO规则更新，命中不改变FIFO顺序。 | 是，A | 硬件/问题名称使用官方术语“共享只读L2 Cache”；FIFO仅用于描述实现中的替换、更新行为，不作为硬件名称的替代。 |
 | 私有L1/UB与DDR | `data/config.txt`；`code/evaluation_validation.py` | `[capacity]`明确要求L1、UB；当前值为L1=524288、UB=131072；图数据中的tensor位置允许DDR/L1/UB。 | 是，A | “私有”若非官方题面原词，需用“每Task/每核评估中的容量配置”谨慎表述。 |
-| P3 Cache容量/带宽 | `data/config.txt`；`code/multicore_cut_evaluate_problem_3.py` | Cache容量=1048576 bytes；Cache带宽=250 bytes/cycle。 | 是，A | 当前文件未给出独立“L2”字段，正文应说明这是P3只读Cache参数。 |
+| P3共享L2 Cache容量/带宽 | 官方题面问题3；`data/config.txt`；`code/multicore_cut_evaluate_problem_3.py` | 共享只读L2 Cache容量=1048576 bytes；带宽=250 bytes/cycle。 | 是，A | 使用官方“共享只读L2 Cache”术语；FIFO是实现行为说明。 |
 | COPY机制 | 三个官方评估器；`src/npu_scheduler/evaluator/official_adapter.py` | 方案转换为官方plan后由官方评估器计算makespan、added_copy_bytes、spill_bytes、cache_hit_rate。 | 是，A | 不能以solver估计器替代官方评估结果。 |
 | Task组织 | P1/P2/P3官方评估器中的`_build_*_tasks` | P1按子图封装Task；P2/P3按核组织Task并补跨核COPY。 | 是，A | 需要在正文区分“子图Task”和“每核Task”。 |
 
@@ -122,9 +122,9 @@
 | 核验项 | 证据 | 已确认事实 | 可否进入正文 | 风险/限制 |
 |---|---|---|---|---|
 | P3 N=1覆盖 | `results/p3_singlecore_full100/p3_n1_l2.csv`；manifest | CSV可解析，100行；字段包含no_l2_makespan、l2_makespan、l2_speedup、cache_hit_rate及两个Added Copy字段。 | 是，A | 配置绑定由P3 manifest及正式运行记录支持。 |
-| N=1 no-L2/L2 | `results/p3_singlecore_full100/p3_n1_l2.csv`；`docs/FINAL_METRICS.md`；正式工具逻辑 | 总case数100；paired-plan一致100；不一致0；缺失0。每个case的一条`plan_sha256`代表同一计划用于no-L2与readonly-L2两次评估；全表99个不同hash是不同case计划不同，并非错误。 | 是，A | 不得要求100个case共用一个全局plan；应写“逐case固定计划的paired comparison”。 |
+| N=1 no-L2/共享L2 | `results/p3_singlecore_full100/p3_n1_l2.csv`；`docs/FINAL_METRICS.md`；正式工具逻辑 | 总case数100；paired-plan一致100；不一致0；缺失0。每个case的一条`plan_sha256`代表同一计划用于no-L2与共享L2 Cache两次评估；全表99个不同hash是不同case计划不同，并非错误。 | 是，A | 不得要求100个case共用一个全局plan；应写“逐case固定计划的paired comparison”。 |
 | N=2~5 no-L2来源 | `scripts/final_visualization.py`；A/B/C job JSON | 取`(case, problem=2, cores=N, algorithm=vns)`，并已独立复算。 | 是，A | detail.csv自身仍不可解析，但归档 job JSON 可核对。 |
-| N=2~5 readonly-L2来源 | `scripts/final_visualization.py`；A/B/C job JSON；P3官方评估器 | 取`(case, problem=3, cores=N, algorithm=vns)`；P3使用正式 `read_only` FIFO Cache，并已独立复算。 | 是，A | 论文若写“L2”，需注明是概括性简称。 |
+| N=2~5共享L2来源 | `scripts/final_visualization.py`；A/B/C job JSON；P3官方评估器 | 取`(case, problem=3, cores=N, algorithm=vns)`；P3使用正式共享只读L2 Cache，其FIFO访问行为与官方规则一致，并已独立复算。 | 是，A | “L2”是官方题面术语；`read_only`及FIFO规则用于说明实现与访问机制。 |
 | L2 speedup | 最终脚本；A/B/C job JSON | 逐case使用P2 vns makespan / P3 vns makespan，再对100 case求均值。 | 是，A | 不得把P3与P2的算法差异误写成只改变Cache而其他求解完全相同。 |
 
 ## H. 算法消融边界
@@ -138,7 +138,7 @@
 | grains/fine-grain | 源码、A/B/C manifest、job JSON，A | full100启用`grains=[4,12,32]`与`fine_grain=2`，后者实际出现在候选来源中。 | 没有独立逐grain full100消融，不能写每个grain的独立收益。 |
 | adaptive | `vns.py`和A/B/C full100 manifest，A | full100实际开启`adaptive_budget=true`，并记录停滞参数。 | 不能据配置推断每个job的实际停止原因。 |
 | cache/memory heuristic | `estimator.py`、`config.py`，A | 正式权重为0，不能声称求解器利用Cache/Memory启发式优化。 | 不可把P3官方Cache效果等同于solver Cache-aware partitioning。 |
-| same-plan L2 | P3 N1 CSV、`docs/FINAL_METRICS.md`及工具逻辑，A | 100个case均为case内固定计划的no-L2/readonly-L2配对比较；不同case之间计划不同是正常的。 | 不可写成100 case共享一个固定plan。 |
+| same-plan L2 | P3 N1 CSV、`docs/FINAL_METRICS.md`及工具逻辑，A | 100个case均为case内固定计划的no-L2/共享L2 Cache配对比较；不同case之间计划不同是正常的。 | 不可写成100 case共享一个固定plan。 |
 
 ### 证据类别
 
@@ -158,8 +158,8 @@
 | 1 | `fig1_p1_speedup` | singlecore.csv与A/B/C job JSON；P1 vns；逐case单核/多核后取100-case均值，误差棒为标准差 | P1随N变化的平均speedup | 正文候选 | 不等于线性扩展保证；merged detail.csv本身不可解析。 |
 | 2 | `fig2_p2_speedup` | 同上，problem=2 | P2随N变化的平均speedup | 正文候选 | 同上。 |
 | 3 | `fig3_p1p2_combined` | P1/P2 speedup合并对比 | P1与P2的扩展性差异 | 正文候选 | 不是新增独立数据；依赖图1/2口径。 |
-| 4 | `fig4_p3_noL2_vs_L2` | P3 N1 CSV用于N1；N2~5用P2 vns no-L2与P3 vns L2逐case配对 | P3只读Cache下no-L2/L2 makespan对比 | 正文候选 | 需明确N2~5 no-L2来自P2、L2来自P3。 |
-| 5 | `fig5_p3_l2_speedup` | N1来自P3 N1 CSV；N2~5逐case P2 vns/P3 vns后取均值 | L2 speedup与Cache hit率随N的统计结果 | 正文候选 | 不是Cache-aware solver消融；“L2”是论文概括性简称。 |
+| 4 | `fig4_p3_noL2_vs_L2` | P3 N1 CSV用于N1；N2~5用P2 vns no-L2与P3 vns共享L2 Cache逐case对照 | P3共享L2 Cache与no-L2的Makespan对比 | 正文候选 | 需明确N2~5 no-L2来自P2、共享L2来自P3。 |
+| 5 | `fig5_p3_l2_speedup` | N1来自P3 N1 CSV；N2~5逐case P2 vns/P3 vns后取均值 | 共享L2 Cache相对无L2的speedup与Cache hit率随N的统计结果 | 正文候选 | 不是Cache-aware solver消融；P2/P3独立求解的限制见G部分。 |
 | 6 | `fig6_stage_ablation` | A/B/C job JSON中的baseline/multiseed/vns，按P与N合并统计 | 三阶段的阶段性下降 | 正文候选 | 嵌套阶段比较，不能做单变量因果或全局最优结论。 |
 | 7 | `fig7_vns_gain_dist` | A/B/C job JSON中每case `(multiseed-vns)/multiseed`，P1/P2/P3、N=2/3与4/5箱线图 | VNS相对Multi-seed收益分布 | 附录/可选正文 | 探索性分布图；不作机制因果。 |
 | 8 | `fig8_cache_hit_vs_speedup` | A/B/C job JSON中P3 cache_hit_rate与P2-vns/P3-vns speedup，N=2~5散点及线性趋势 | Cache hit与L2 speedup的相关性探索 | 附录/可选正文 | 只能写相关性，不能写因果；不得把回归线当机制证明。 |
@@ -184,7 +184,7 @@
 
 ## 当前可安全进入论文的最小集合
 
-1. P1/P2/P3的官方评估机制差异、COPY和P3只读FIFO Cache机制（A级源码证据）。
+1. P1/P2/P3的官方评估机制差异、COPY和P3共享只读L2 Cache及其FIFO访问机制（A级题面/源码证据）。官方题面当前实际文件位于仓库根目录`通用神经网络处理器下的多核调度问题.docx`；第1、2章的题面依据有效，无需因文件归档位置不同作废或重写。
 2. Solver的Multi-seed + VNS(strict descent)结构、8个邻域、HEFT-style分配和官方Evaluator闭环（A级源码证据）。
 3. L1/UB、带宽、等待、Cache容量和Cache带宽等`data/config.txt`正式评估参数（A级配置证据）。
 4. singlecore 100-case基准及逐case speedup计算方法（A级结果/脚本证据）。

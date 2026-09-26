@@ -1,6 +1,6 @@
 # 4 多核图划分与调度统一模型
 
-本章建立三个问题共用的方案表示、可行性条件与评价目标。统一之处在于：三个问题都从同一计算图出发，生成图划分、子图到计算核的映射以及各核上的子图执行顺序；差异则由官方 Evaluator 对 Task、跨边通信和只读 FIFO Cache 的不同执行语义给出。因而，本章只定义“求解什么”和“如何由官方规则评价”，候选如何产生和改进留待第5章说明。
+本章建立三个问题共用的方案表示、可行性条件与评价目标。统一之处在于：三个问题都从同一计算图出发，生成图划分、子图到计算核的映射以及各核上的子图执行顺序；差异则由官方 Evaluator 对 Task、跨边通信和共享只读L2 Cache的不同执行语义给出。因而，本章只定义“求解什么”和“如何由官方规则评价”，候选如何产生和改进留待第5章说明。
 
 <!-- Evidence: paper/EVIDENCE_MAP.md A-C；src/npu_scheduler/graph.py；src/npu_scheduler/types.py；src/npu_scheduler/evaluator/official_adapter.py -->
 
@@ -124,16 +124,16 @@ $$
 
 <!-- Evidence: paper/EVIDENCE_MAP.md A“P2 / Scene B”“Task组织”；src/npu_scheduler/evaluator/official_adapter.py -->
 
-### 4.2.3 问题三：P2基础上的只读FIFO Cache
+### 4.2.3 问题三：共享L2资源下的多核切图与调度
 
-问题三沿用问题二的按核Task与跨核COPY机制，并在 `COPY_IN` 的读取路径上增加只读 FIFO Cache。只有 `COPY_IN` 可以查询该Cache：
+问题三沿用问题二的按核Task与跨核COPY机制，并在 `COPY_IN` 的读取路径上增加所有核心共享的只读L2 Cache（以下简称共享L2 Cache）。只有 `COPY_IN` 可以查询该Cache：
 
 1. 命中时，读取进入独立的Cache读取带宽池；
 2. 未命中时，数据从DDR读取，完成后按FIFO规则写入Cache；
 3. 容量不足时按进入顺序淘汰；
 4. 命中不会刷新FIFO先后顺序。
 
-因此，问题三的Cache状态影响读取完成时间和最终Makespan，同时产生Cache命中率评价量。本文统一使用“只读FIFO Cache”或代码中的 `read_only` Cache；若后文为便于图题表达使用“L2”简称，必须在首次出现时说明其仅为本文概括性称呼，而非官方原词。
+因此，共享L2 Cache状态影响读取完成时间和最终Makespan，同时产生Cache命中率评价量。Cache只读；未命中数据读取完成后的写入、容量不足时的淘汰以及命中不刷新顺序均遵循FIFO规则。正文使用官方题面术语“共享只读L2 Cache”；`read_only` 是实现字段，FIFO仅描述访问状态更新和替换行为。
 
 <!-- Evidence: paper/EVIDENCE_MAP.md A“P3相对P2的增加”；正式说明 `docs/多核并行模拟执行算法.md`，本章事实以EVIDENCE_MAP冻结结论为准 -->
 
@@ -202,7 +202,7 @@ $$
 U_r(t;X,s)\le C_r.
 $$
 
-问题三的只读FIFO Cache还具有独立容量参数。需要强调的是，当前方案对象的本地 `validate` 主要检查划分、核映射和块序；内存、全局FIFO和跨核执行等场景合法性最终由官方 Evaluator 检查。若官方执行器因容量或执行规则返回不可行错误，该候选的评价被标记为无效，而不是由求解器修改官方规则使其通过。
+问题三的共享只读L2 Cache还具有独立容量参数。需要强调的是，当前方案对象的本地 `validate` 主要检查划分、核映射和块序；内存、Cache FIFO状态和跨核执行等场景合法性最终由官方 Evaluator 检查。若官方执行器因容量或执行规则返回不可行错误，该候选的评价被标记为无效，而不是由求解器修改官方规则使其通过。
 
 <!-- Evidence: src/npu_scheduler/evaluator/official_adapter.py OfficialEvaluator.evaluate；paper/EVIDENCE_MAP.md A、D -->
 

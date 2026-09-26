@@ -7,8 +7,8 @@ flowchart LR
     CORE --> COPYIN
   end
 
-  subgraph P3[P3只读FIFO Cache读取路径]
-    LOOKUP[只读FIFO Cache查询<br/>仅COPY_IN可查询]
+  subgraph P3[P3共享只读L2 Cache读取路径]
+    LOOKUP[共享L2 Cache查询（只读）<br/>仅COPY_IN可查询]
     HIT{数据命中？}
     CACHE[Cache读取路径<br/>对应Cache带宽]
     DDR[DDR读取]
