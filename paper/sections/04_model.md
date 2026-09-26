@@ -102,6 +102,18 @@ $$
 
 <!-- Evidence: src/npu_scheduler/evaluator/official_adapter.py；src/npu_scheduler/types.py Evaluation -->
 
+三个问题的场景与执行机制差异汇总于表2；统一评价目标见4.4节。
+
+表2 三个问题的场景与执行机制差异
+
+| 问题 | 场景 | Task组织 | 同核子图数据复用 | 跨核通信 | 共享L2 Cache | 主要评价目标 |
+|---|---|---|---|---|---|---|
+| P1 | 场景A，无核间同步机制 | 每个子图独立构成一个Task | 跨Task不保留核内数据；所有跨子图数据经DDR中转 | 子图边界经DDR搬运，由Task调度处理同步依赖 | 无 | Makespan优先，兼顾Added Copy |
+| P2 | 场景B，有核间同步机制 | 同一核心上的全部子图组成一个Task | 允许在L1/UB容量约束下复用同核驻留数据 | 源核COPY_OUT写入DDR并同步，目标核COPY_IN读取 | 无 | Makespan优先，兼顾Added Copy |
+| P3 | 场景B基础上增加共享只读L2 Cache | 与P2相同，按核组织Task | 与P2相同，允许L1/UB复用 | 沿用P2跨核通信规则；COPY_IN读取可由Cache命中路径服务 | 所有核心共享，用于多核共享输入复用；仅COPY_IN查询，FIFO规则更新 | Makespan优先，兼顾Added Copy；Cache Hit Rate为分析指标 |
+
+<!-- Evidence: 2026官方A题1.4、1.5、问题1—3、附录D；本章4.2.1—4.2.3、4.4；paper/EVIDENCE_MAP.md A、B。 -->
+
 ### 4.2.1 问题一：Scene A
 
 问题一按子图封装 Task。子图边界处需要根据正式规则插入DDR方向的COPY操作，跨Task依赖使用Scene A的跨核等待参数，同核Task之间使用相应的同核等待规则。因而，图划分不仅改变每个Task包含的计算节点，也改变Task边界和相应数据搬运。
@@ -136,6 +148,8 @@ $$
 因此，共享L2 Cache状态影响读取完成时间和最终Makespan，同时产生Cache命中率评价量。Cache只读；未命中数据读取完成后的写入、容量不足时的淘汰以及命中不刷新顺序均遵循FIFO规则。正文使用官方题面术语“共享只读L2 Cache”；`read_only` 是实现字段，FIFO仅描述访问状态更新和替换行为。
 
 <!-- Evidence: paper/EVIDENCE_MAP.md A“P3相对P2的增加”；正式说明 `docs/多核并行模拟执行算法.md`，本章事实以EVIDENCE_MAP冻结结论为准 -->
+
+[FIGURE: Framework D]
 
 ### 4.2.4 场景参数化表达
 

@@ -36,6 +36,8 @@ $$
 
 <!-- Evidence: src/npu_scheduler/search/vns.py solve；src/npu_scheduler/partition/initial_partition.py seeds -->
 
+[FIGURE: Framework B]
+
 ## 5.2 Baseline初始方案
 
 Baseline用于提供最先尝试的可行方案和阶段比较起点，不作为独立创新算法。设正式grain序列为 $(g_1,g_2,g_3)$，Baseline取其中间位置的grain，即正式full100中的 $g_2=12$，并采用balanced模式完成粗化与核分配。

@@ -21,7 +21,7 @@
 6. **图中必须出现的文字**：“Baseline（seed阶段起始候选）”“Multi-seed四类候选”“fine-grain=2（候选变体）”“HEFT-style核分配”“seed候选逐个官方评价”“VNS候选池→启发式排序→Top-K→官方Evaluator”“严格下降”“best-so-far”“统一流程按P1/P2/P3分别运行并评价”。候选池48、Top-K=3可作为当前正式配置注记；不要将其套用于seed阶段。
 7. **图中禁止出现的文字**：SA、GA、Tabu、CP-SAT；“fine-grain独立阶段/贡献”；“Cache Hit Rate优化目标”；“global optimum/全局最优”；“Cache-aware partition”；任何把Cache容量画成solver决策变量的文字；未经Evidence Map绑定的实验数字和硬件模块。
 8. **推荐caption**：图X 统一求解框架：Multi-seed候选经官方评价形成当前解，VNS仅对邻域候选进行池化、排序和Top-K评价，最终方案按问题场景交由相应官方Evaluator评价。
-9. **对应正文位置**：第2章总体求解思路或第5章5.1；正文仅放一处完整图。
+9. **对应正文位置**：第2章2.1整体求解思路之后；正文仅放一处完整图。
 10. **Evidence来源**：`paper/EVIDENCE_MAP.md` 的A（场景及Evaluator）、B（正式目标）、C（正式流水线、Baseline、四类seed、fine-grain、VNS排序与接受准则、adaptive）、D（正式候选池/Top-K配置）；`paper/sections/04_model.md` 4.2、4.4、4.5；`paper/sections/05_algorithm.md` 5.1、5.3、5.5、5.7。
 
 ## Framework B：Multi-seed + VNS内部流程
@@ -39,7 +39,7 @@
 6. **图中必须出现的文字**：“Seed阶段：Baseline + 四类Multi-seed family”“digest去重”“seed候选逐个官方评价”“VNS阶段”“最多48个合法、唯一、未评价候选”“启发式排序”“Top-K=3”“严格改善：$(Makespan, Added Copy)$”“接受/更新或保持当前best-so-far”“adaptive选择/停止”“达到停止条件则输出best-so-far”。
 7. **图中禁止出现的文字**：“Seed阶段candidate_pool=48→Top-K=3”；“劣解接受”；“SA”；“global optimum”；fine-grain=2独立阶段；adaptive独立消融贡献；把内部启发式分数标成Makespan。
 8. **推荐caption**：图X Multi-seed与VNS的两阶段搜索流程。Multi-seed候选在预算允许时逐个进行官方评价；候选池与Top-K筛选用于VNS邻域候选，最终更新依据官方字典序目标的严格改善。
-9. **对应正文位置**：第5章5.1，作为Algorithm 1的流程图对应图；避免重复绘制Framework A全局主线。
+9. **对应正文位置**：第5章5.1整体求解流程说明之后，作为Algorithm 1的流程图对应图；避免重复绘制Framework A全局主线。
 10. **Evidence来源**：`paper/EVIDENCE_MAP.md` C、D；`paper/sections/05_algorithm.md` 5.1、5.3、5.5、5.6、5.7及Algorithm 1。
 
 ## Framework D：P3共享只读L2 Cache访问机制
@@ -60,7 +60,7 @@
 6. **图中必须出现的文字**：“所有核心共享的只读L2 Cache”“仅COPY_IN查询Cache”“命中→Cache读取带宽”“未命中→DDR读取”“读取完成后按FIFO规则更新”“容量不足时FIFO淘汰”“命中不刷新FIFO顺序”“Cache Hit Rate为评价指标，非优化目标”“Cache容量由正式配置给定”。
 7. **图中禁止出现的文字**：“可写Cache”“写回”“命中刷新/LRU/LFU”“预取”“solver主动替换/优化Cache容量”“Cache-aware partition”“所有访问均可命中”“cache_weight启用Cache机制”。可在图注或规格中说明正式solver的`cache_weight=0`；不建议将代码变量名放入图面。
 8. **推荐caption**：图X P3共享只读L2 Cache访问路径。仅COPY_IN请求查询Cache；命中走Cache读取路径，未命中从DDR读取并在读取完成后按FIFO规则更新状态，Cache命中率由官方Evaluator统计。
-9. **对应正文位置**：第4章4.2.3（机制定义）；第9章P3结果部分可引用，不重复画机制图。
+9. **对应正文位置**：第4章4.2.3共享只读L2机制说明之后；第9章P3结果部分引用，不重复画机制图。
 10. **Evidence来源**：`paper/EVIDENCE_MAP.md` A（P3相对P2增加、Cache容量/带宽、COPY机制）、B（Cache Hit Rate指标与非优化目标）、D（正式solver cache_weight=0）；`paper/sections/04_model.md` 4.2.2、4.2.3、4.4.3、4.5；`paper/sections/05_algorithm.md` 5.4.3。
 
 ## 绘图前风险核对
