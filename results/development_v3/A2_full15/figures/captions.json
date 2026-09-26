@@ -1,0 +1,7 @@
+{
+  "scope": "Development subset only; not the final 100-case competition experiment.",
+  "speedup": "Mean of per-case ratios; singlecore.csv is the independent official single-core baseline.",
+  "ablation": "Nested baseline, multi-seed and VNS checkpoints under the same run.",
+  "runtime": "Cumulative wall time including earlier algorithm stages; CLI verification excluded.",
+  "l2": "Independent P2/P3 optimization confounds placement changes and cache benefit; not a controlled same-plan cache ablation."
+}

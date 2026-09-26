@@ -71,10 +71,11 @@ def report(directory):
     if singlefile.exists():
         single={r['case']:int(r['makespan']) for r in csv.DictReader(singlefile.open(encoding='utf-8'))}
         speed=[]
-        for p in (1,2):
+        for p in sorted({p for _,p,_ in by}):
             for n in sorted({n for _,_,n in by}):
                 group=[algs['vns'] for (case,prob,k),algs in by.items() if prob==p and k==n]
-                speed.append(dict(problem=p,cores=n,mean_speedup=statistics.mean(single[r['case']]/r['makespan'] for r in group)))
+                if group:
+                    speed.append(dict(problem=p,cores=n,mean_speedup=statistics.mean(single[r['case']]/r['makespan'] for r in group)))
         write_csv(directory/'singlecore_speedup_summary.csv',speed)
         lines+=['## 相对官方独立单核的平均加速比','', '| 问题 | 核数 | 平均逐例加速比 |','|---|---:|---:|']
         lines.extend(f"| {r['problem']} | {r['cores']} | {r['mean_speedup']:.3f} |" for r in speed)

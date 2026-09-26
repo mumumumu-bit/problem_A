@@ -13,7 +13,7 @@ from .graph import GraphData
 from .evaluator.official_adapter import OfficialEvaluator
 from .evaluator.cache import atomic_json
 from .search.vns import solve
-from .experiment.runner import run_benchmark,audit,DEVELOPMENT_CASES
+from .experiment.runner import run_benchmark,audit,load_development_cases
 
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -27,7 +27,7 @@ def main(argv=None):
     parser.add_argument('--solver-config',type=Path)
     parser.add_argument('--problem',type=int,nargs='+',default=[1,2,3],choices=[1,2,3])
     parser.add_argument('--cores',type=int,nargs='+',default=[2,4])
-    parser.add_argument('--cases',nargs='+',default=list(DEVELOPMENT_CASES))
+    parser.add_argument('--cases',nargs='+',default=list(load_development_cases()))
     parser.add_argument('--workers',type=int)
     parser.add_argument('--time-budget',type=float)
     parser.add_argument('--max-evaluations',type=int)

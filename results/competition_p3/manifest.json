@@ -1,0 +1,71 @@
+{
+  "created": "2026-09-25T11:53:43.184556+00:00",
+  "git_commit": "51bc11b6595658f310314937a859acb4d990fcaa",
+  "git_dirty": true,
+  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "algorithm_version": "0.1.0",
+  "source_hash": "6a82b2e495797432d9eb31a2e4d633d3eea583c3bf824838e9bf5086a4f852cc",
+  "config": {
+    "seed": 2026,
+    "time_budget": 300.0,
+    "max_evaluations": 64,
+    "candidate_pool": 24,
+    "top_k": 2,
+    "max_rounds": 16,
+    "grains": [
+      4,
+      12,
+      32
+    ],
+    "affinity_weight": 0.5,
+    "communication_weight": 1.0,
+    "memory_weight": 0.0,
+    "cache_weight": 0.0,
+    "atomic_fraction": 0.5,
+    "weak_link_fraction": 0.25,
+    "pipe_balance_weight": 0.2,
+    "seed_budget_fraction": 0.45,
+    "whole_graph_max_ops": 10000,
+    "workers": 2,
+    "adaptive_budget": false,
+    "min_neighbourhood_trials": 3,
+    "stagnation_patience": 8,
+    "fine_grain": 2,
+    "portfolio_size": 10
+  },
+  "seed": 2026,
+  "cases": [
+    "case_001",
+    "case_005",
+    "case_014",
+    "case_019",
+    "case_025",
+    "case_035",
+    "case_047",
+    "case_050",
+    "case_054",
+    "case_060",
+    "case_069",
+    "case_085",
+    "case_087",
+    "case_093",
+    "case_100"
+  ],
+  "problems": [
+    3
+  ],
+  "cores": [
+    2,
+    4
+  ],
+  "official_hash": "bb32dc6849453ba7fe49685c00134a54a9bf526390a711c6df7eef3f37f48b51",
+  "dependencies": {
+    "npu-scheduler": "0.1.0",
+    "pip": "24.0",
+    "setuptools": "65.5.0"
+  },
+  "timing": "Wall time, cumulative across baseline -> multi-seed -> VNS. Cache hits recorded separately.",
+  "budget": "Soft wall deadline checked between official calls; one in-flight evaluation may overrun.",
+  "identity": "9baff2f967f48587bfb5576e49e0f85b69eebfd3f2671a3f6d658a548dfc1a45"
+}

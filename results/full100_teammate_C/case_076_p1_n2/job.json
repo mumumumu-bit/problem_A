@@ -1,0 +1,83 @@
+{
+  "rows": [
+    {
+      "case": "case_076",
+      "problem": 1,
+      "cores": 2,
+      "algorithm": "baseline",
+      "makespan": 3199741,
+      "added_copy_bytes": 31710296,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0,
+      "runtime": 25.90503449982498,
+      "evaluations": 1,
+      "source": "baseline",
+      "scale": "extra-large"
+    },
+    {
+      "case": "case_076",
+      "problem": 1,
+      "cores": 2,
+      "algorithm": "multiseed",
+      "makespan": 3065568,
+      "added_copy_bytes": 42680320,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0,
+      "runtime": 211.2916840998223,
+      "evaluations": 4,
+      "source": "pipe-32",
+      "scale": "extra-large"
+    },
+    {
+      "case": "case_076",
+      "problem": 1,
+      "cores": 2,
+      "algorithm": "vns",
+      "makespan": 3063016,
+      "added_copy_bytes": 42680320,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0,
+      "runtime": 303.64521079987753,
+      "evaluations": 12,
+      "source": "N2",
+      "scale": "extra-large"
+    }
+  ],
+  "config": {
+    "seed": 2026,
+    "time_budget": 300.0,
+    "max_evaluations": 20,
+    "candidate_pool": 48,
+    "top_k": 3,
+    "max_rounds": 32,
+    "grains": [
+      4,
+      12,
+      32
+    ],
+    "affinity_weight": 0.5,
+    "communication_weight": 1.0,
+    "memory_weight": 0.0,
+    "cache_weight": 0.0,
+    "atomic_fraction": 0.5,
+    "weak_link_fraction": 0.25,
+    "pipe_balance_weight": 0.2,
+    "seed_budget_fraction": 0.45,
+    "whole_graph_max_ops": 10000,
+    "workers": 2,
+    "adaptive_budget": true,
+    "min_neighbourhood_trials": 3,
+    "stagnation_patience": 8,
+    "fine_grain": 2,
+    "portfolio_size": 12
+  },
+  "graph_hash": "3efe0c6d0bcd48e783b5d77b45d5488e4c4b7211532e673c051ade2e821fec38",
+  "official_hash": "d8e09c792cd35ec8835dd914bde5d9bc21393d69dff27de8ffc3fd065572322d",
+  "evaluator_calls": 12,
+  "cache_hits": 0,
+  "evaluator_seconds": 294.07561880000867,
+  "total_seconds": 302.9283394999802,
+  "cli_verified": false,
+  "cli_seconds": 0.0,
+  "invalid_candidates": 0
+}

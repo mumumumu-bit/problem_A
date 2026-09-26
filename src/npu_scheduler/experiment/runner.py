@@ -16,9 +16,25 @@ from ..config import SolverConfig
 from ..evaluator.official_adapter import OfficialEvaluator
 from ..evaluator.cache import atomic_json, digest
 from ..search.vns import solve
-from .recorder import manifest,write_csv
+from .recorder import manifest, write_csv
 
-DEVELOPMENT_CASES=('case_001','case_019','case_005','case_050','case_025','case_085')
+DEVELOPMENT_CASES = ('case_001', 'case_019', 'case_005', 'case_050', 'case_025', 'case_085')
+
+# Extended development set for v3: loaded from config YAML if present
+def load_development_cases(root_dir=None):
+    """Load development cases from configs/development_cases.yaml if available."""
+    root = Path(root_dir) if root_dir else Path(__file__).resolve().parents[3]
+    yaml_path = root / 'configs' / 'development_cases.yaml'
+    if yaml_path.exists():
+        try:
+            import yaml
+            data = yaml.safe_load(yaml_path.read_text(encoding='utf-8'))
+            cases = data.get('development_cases', [])
+            if cases:
+                return tuple(cases)
+        except Exception:
+            pass
+    return DEVELOPMENT_CASES
 
 
 def audit(data_dir, output):
