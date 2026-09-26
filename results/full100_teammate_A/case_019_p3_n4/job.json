@@ -1,0 +1,83 @@
+{
+  "rows": [
+    {
+      "case": "case_019",
+      "problem": 3,
+      "cores": 4,
+      "algorithm": "baseline",
+      "makespan": 54585,
+      "added_copy_bytes": 603012,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0.11562771515189935,
+      "runtime": 0.2115029999986291,
+      "evaluations": 1,
+      "source": "baseline",
+      "scale": "small"
+    },
+    {
+      "case": "case_019",
+      "problem": 3,
+      "cores": 4,
+      "algorithm": "multiseed",
+      "makespan": 21478,
+      "added_copy_bytes": 55304,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0.10616899948159668,
+      "runtime": 2.294081099998948,
+      "evaluations": 14,
+      "source": "pipe-2",
+      "scale": "small"
+    },
+    {
+      "case": "case_019",
+      "problem": 3,
+      "cores": 4,
+      "algorithm": "vns",
+      "makespan": 21478,
+      "added_copy_bytes": 55304,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0.10616899948159668,
+      "runtime": 6.081935999998677,
+      "evaluations": 38,
+      "source": "pipe-2",
+      "scale": "small"
+    }
+  ],
+  "config": {
+    "seed": 2026,
+    "time_budget": 300.0,
+    "max_evaluations": 64,
+    "candidate_pool": 48,
+    "top_k": 3,
+    "max_rounds": 32,
+    "grains": [
+      4,
+      12,
+      32
+    ],
+    "affinity_weight": 0.5,
+    "communication_weight": 1.0,
+    "memory_weight": 0.0,
+    "cache_weight": 0.0,
+    "atomic_fraction": 0.5,
+    "weak_link_fraction": 0.25,
+    "pipe_balance_weight": 0.2,
+    "seed_budget_fraction": 0.45,
+    "whole_graph_max_ops": 10000,
+    "workers": 2,
+    "adaptive_budget": true,
+    "min_neighbourhood_trials": 3,
+    "stagnation_patience": 8,
+    "fine_grain": 2,
+    "portfolio_size": 12
+  },
+  "graph_hash": "2de5aad076bc34c5213fb5551395e56b29c4d29dd8a635f167685777c095b8f9",
+  "official_hash": "d8e09c792cd35ec8835dd914bde5d9bc21393d69dff27de8ffc3fd065572322d",
+  "evaluator_calls": 38,
+  "cache_hits": 0,
+  "evaluator_seconds": 5.340513799998007,
+  "total_seconds": 6.052298900000096,
+  "cli_verified": false,
+  "cli_seconds": 0.0,
+  "invalid_candidates": 0
+}

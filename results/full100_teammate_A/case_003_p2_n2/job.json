@@ -1,0 +1,83 @@
+{
+  "rows": [
+    {
+      "case": "case_003",
+      "problem": 2,
+      "cores": 2,
+      "algorithm": "baseline",
+      "makespan": 462884,
+      "added_copy_bytes": 1509030,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0,
+      "runtime": 6.234509499999831,
+      "evaluations": 1,
+      "source": "baseline",
+      "scale": "large"
+    },
+    {
+      "case": "case_003",
+      "problem": 2,
+      "cores": 2,
+      "algorithm": "multiseed",
+      "makespan": 394896,
+      "added_copy_bytes": 2022666,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0,
+      "runtime": 89.6803990999997,
+      "evaluations": 13,
+      "source": "balanced-32",
+      "scale": "large"
+    },
+    {
+      "case": "case_003",
+      "problem": 2,
+      "cores": 2,
+      "algorithm": "vns",
+      "makespan": 385288,
+      "added_copy_bytes": 1933066,
+      "spill_bytes": 0,
+      "cache_hit_rate": 0,
+      "runtime": 182.61559129999978,
+      "evaluations": 26,
+      "source": "N5",
+      "scale": "large"
+    }
+  ],
+  "config": {
+    "seed": 2026,
+    "time_budget": 300.0,
+    "max_evaluations": 26,
+    "candidate_pool": 48,
+    "top_k": 3,
+    "max_rounds": 32,
+    "grains": [
+      4,
+      12,
+      32
+    ],
+    "affinity_weight": 0.5,
+    "communication_weight": 1.0,
+    "memory_weight": 0.0,
+    "cache_weight": 0.0,
+    "atomic_fraction": 0.5,
+    "weak_link_fraction": 0.25,
+    "pipe_balance_weight": 0.2,
+    "seed_budget_fraction": 0.45,
+    "whole_graph_max_ops": 10000,
+    "workers": 2,
+    "adaptive_budget": true,
+    "min_neighbourhood_trials": 3,
+    "stagnation_patience": 8,
+    "fine_grain": 2,
+    "portfolio_size": 12
+  },
+  "graph_hash": "298d89f65a4a3c3f778167699157f67019dd462dd8228253d83258c18af89bc9",
+  "official_hash": "d8e09c792cd35ec8835dd914bde5d9bc21393d69dff27de8ffc3fd065572322d",
+  "evaluator_calls": 26,
+  "cache_hits": 0,
+  "evaluator_seconds": 169.48300970000014,
+  "total_seconds": 182.17518129999985,
+  "cli_verified": false,
+  "cli_seconds": 0.0,
+  "invalid_candidates": 0
+}
