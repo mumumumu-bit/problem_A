@@ -105,7 +105,6 @@ python code/multicore_cut_evaluate_problem_1.py data/case_001.json reproduction/
 
 P2、P3对应 `multicore_cut_evaluate_problem_2.py`、`multicore_cut_evaluate_problem_3.py`。单核正式生成工具 `scripts/singlecore_full100.py`、`scripts/p3_singlecore_l2.py` 及其调用记录位于 `origin/results/singlecore-full100` 归档；当前paper工作树没有这两个脚本，不能将其写成当前目录可直接执行的提交命令。P3工具对同一plan执行problem=2与problem=3评价并核验plan未被修改。
 
-[PROGRAM-PACKAGE-TODO: 最终程序附件README中补充] 最终压缩包名称与目录、提交用单case命令及问题切换方式、安装/激活步骤、单核归档工具是否纳入附件、运行环境及依赖版本、dirty工作树与归档源码指纹的对应说明。上述仓库入口说明不能替代实际程序附件交付，也不表示已验证最终压缩包在独立环境运行。
 
 <!-- Evidence: pyproject.toml；docs/solver_usage.md（仅入口与环境部分，旧开发集结果不作为正式结果）；src/npu_scheduler/cli.py；scripts/run_all.py；scripts/run_full100_A/B/C.ps1；README.md；official_adapter.py；origin/results/singlecore-full100:docs/FINAL_METRICS.md及归档工具。所有示例均未执行。 -->
 

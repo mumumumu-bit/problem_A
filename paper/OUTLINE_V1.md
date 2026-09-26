@@ -78,7 +78,7 @@ fig5_p3_l2_speedup放9.4。机制图引用4.2.3的Framework D，不重复插入�
 
 状态：完成。来源文件：`paper/sections/appendix_A_reproducibility.md`。
 A.1实验设置；A.2正式求解配置；A.3结果生成流程；A.4程序入口与复现方式；A.5输出与评价指标。
-记录配置、源码来源、manifest、数据范围与统计来源链；说明git_dirty provenance，不能仅凭commit声称完整运行源码可复现。已只读核验真实入口，图规模评价预算与VNS筛选区分。程序脚本按官方题面作为附件提交；最终包README信息保留PROGRAM-PACKAGE-TODO，不能以附录说明替代程序交付。
+记录配置、源码来源、manifest、数据范围与统计来源链；说明git_dirty provenance，不能仅凭commit声称完整运行源码可复现。已只读核验真实入口，图规模评价预算与VNS筛选区分。程序脚本按官方题面作为附件提交；最终包README待办统一移至内部清单 `paper/PROGRAM_PACKAGE_TODO.md`，不进入PDF，不能以附录说明替代程序交付。
 
 ## 附录B 逐用例评估结果及补充图
 
@@ -97,7 +97,7 @@ C.1保留SA-VNS原探索说明、附表C1、Stage 1/Stage 2/Expansion详细结�
 
 状态：框架完成，AI具体版本信息待最终核验。来源文件：`paper/sections/appendix_D_ai_usage.md`。
 D.1 AI工具及用途；D.2 AI辅助环节；D.3人工核验和修改；D.4 AI辅助编程与数据分析；D.5最终责任说明。
-按团队真实记录及2026研赛附件4整理，不虚构工具信息或人工签认。未确认字段保留VERIFY-BEFORE-PDF；最终模型、算法选择、结果解释与论文内容由团队确认。附录不能替代分析结果旁和程序前的规定注释。
+按团队真实记录及2026研赛附件4整理，不虚构工具信息或人工签认。未确认元数据保留EXTERNAL-VERIFY-REQUIRED，人工核验事项保留VERIFY-BEFORE-PDF；最终模型、算法选择、结果解释与论文内容由团队确认。附录不能替代分析结果旁和程序前的规定注释。
 
 附录字母与顺序冻结为A配置与复现、B逐用例结果及补充图、C算法补充与SA探索、D AI工具使用说明，不新增其他附录字母。A/B/C完成指内容文件完成，Word排版和实际程序附件仍按最终整稿清单落实。
 
