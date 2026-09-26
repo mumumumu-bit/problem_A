@@ -1,0 +1,83 @@
+{
+  "rows": [
+    {
+      "case": "case_079",
+      "problem": 2,
+      "cores": 5,
+      "algorithm": "baseline",
+      "makespan": 6336767,
+      "added_copy_bytes": 44027904,
+      "spill_bytes": 24428544,
+      "cache_hit_rate": 0,
+      "runtime": 6.654743000050075,
+      "evaluations": 1,
+      "source": "baseline",
+      "scale": "large"
+    },
+    {
+      "case": "case_079",
+      "problem": 2,
+      "cores": 5,
+      "algorithm": "multiseed",
+      "makespan": 6031014,
+      "added_copy_bytes": 50632704,
+      "spill_bytes": 28069888,
+      "cache_hit_rate": 0,
+      "runtime": 84.03347020002548,
+      "evaluations": 11,
+      "source": "pipe-32",
+      "scale": "large"
+    },
+    {
+      "case": "case_079",
+      "problem": 2,
+      "cores": 5,
+      "algorithm": "vns",
+      "makespan": 6014575,
+      "added_copy_bytes": 50350080,
+      "spill_bytes": 27850752,
+      "cache_hit_rate": 0,
+      "runtime": 186.73454660002608,
+      "evaluations": 26,
+      "source": "N5",
+      "scale": "large"
+    }
+  ],
+  "config": {
+    "seed": 2026,
+    "time_budget": 300.0,
+    "max_evaluations": 26,
+    "candidate_pool": 48,
+    "top_k": 3,
+    "max_rounds": 32,
+    "grains": [
+      4,
+      12,
+      32
+    ],
+    "affinity_weight": 0.5,
+    "communication_weight": 1.0,
+    "memory_weight": 0.0,
+    "cache_weight": 0.0,
+    "atomic_fraction": 0.5,
+    "weak_link_fraction": 0.25,
+    "pipe_balance_weight": 0.2,
+    "seed_budget_fraction": 0.45,
+    "whole_graph_max_ops": 10000,
+    "workers": 2,
+    "adaptive_budget": true,
+    "min_neighbourhood_trials": 3,
+    "stagnation_patience": 8,
+    "fine_grain": 2,
+    "portfolio_size": 12
+  },
+  "graph_hash": "8c13f61fc8a44291c8d025d5ce3c97fffd9e67dfbbed8aaff12ae0f67c2f80f5",
+  "official_hash": "d8e09c792cd35ec8835dd914bde5d9bc21393d69dff27de8ffc3fd065572322d",
+  "evaluator_calls": 26,
+  "cache_hits": 0,
+  "evaluator_seconds": 175.28601139993407,
+  "total_seconds": 186.3044316000305,
+  "cli_verified": false,
+  "cli_seconds": 0.0,
+  "invalid_candidates": 0
+}
