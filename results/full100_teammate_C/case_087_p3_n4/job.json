@@ -1,0 +1,83 @@
+{
+  "rows": [
+    {
+      "case": "case_087",
+      "problem": 3,
+      "cores": 4,
+      "algorithm": "baseline",
+      "makespan": 1818220,
+      "added_copy_bytes": 10068636,
+      "spill_bytes": 1833984,
+      "cache_hit_rate": 0.3467475486788234,
+      "runtime": 8.881156799965538,
+      "evaluations": 1,
+      "source": "baseline",
+      "scale": "extra-large"
+    },
+    {
+      "case": "case_087",
+      "problem": 3,
+      "cores": 4,
+      "algorithm": "multiseed",
+      "makespan": 1132927,
+      "added_copy_bytes": 7259126,
+      "spill_bytes": 4156416,
+      "cache_hit_rate": 0.22412173698383994,
+      "runtime": 134.75218509999104,
+      "evaluations": 13,
+      "source": "pipe-2",
+      "scale": "extra-large"
+    },
+    {
+      "case": "case_087",
+      "problem": 3,
+      "cores": 4,
+      "algorithm": "vns",
+      "makespan": 1042302,
+      "added_copy_bytes": 7051766,
+      "spill_bytes": 4571136,
+      "cache_hit_rate": 0.1733062853087918,
+      "runtime": 196.31008949992247,
+      "evaluations": 20,
+      "source": "N2",
+      "scale": "extra-large"
+    }
+  ],
+  "config": {
+    "seed": 2026,
+    "time_budget": 300.0,
+    "max_evaluations": 20,
+    "candidate_pool": 48,
+    "top_k": 3,
+    "max_rounds": 32,
+    "grains": [
+      4,
+      12,
+      32
+    ],
+    "affinity_weight": 0.5,
+    "communication_weight": 1.0,
+    "memory_weight": 0.0,
+    "cache_weight": 0.0,
+    "atomic_fraction": 0.5,
+    "weak_link_fraction": 0.25,
+    "pipe_balance_weight": 0.2,
+    "seed_budget_fraction": 0.45,
+    "whole_graph_max_ops": 10000,
+    "workers": 2,
+    "adaptive_budget": true,
+    "min_neighbourhood_trials": 3,
+    "stagnation_patience": 8,
+    "fine_grain": 2,
+    "portfolio_size": 12
+  },
+  "graph_hash": "60c98e279bb891a583e96877d967765fa4a48a701351c3c8880312d01f931b4e",
+  "official_hash": "d8e09c792cd35ec8835dd914bde5d9bc21393d69dff27de8ffc3fd065572322d",
+  "evaluator_calls": 20,
+  "cache_hits": 0,
+  "evaluator_seconds": 187.66914639959577,
+  "total_seconds": 195.71181489992887,
+  "cli_verified": false,
+  "cli_seconds": 0.0,
+  "invalid_candidates": 0
+}
