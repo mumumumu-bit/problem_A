@@ -1,4 +1,4 @@
-# 附录B 逐用例评估结果
+# 附录B 逐用例评估结果及补充图
 
 本附录列示100个测试用例（case_001至case_100）在核数N=1至5下的最终正式评估结果。Makespan单位为周期，Added Copy为总额外数据搬运量，单位为字节；Cache Hit Rate为[0,1]范围的命中比例。Added Copy不包含另列的spill_bytes，不能将二者混写。
 

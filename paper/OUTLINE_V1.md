@@ -74,25 +74,32 @@ fig5_p3_l2_speedup放9.4。机制图引用4.2.3的Framework D，不重复插入�
 
 # 附录
 
-## 附录A 正式配置与复现信息
+## 附录A 实验配置与复现说明
 
-记录配置、源码来源、manifest、数据范围与统计来源链；说明git_dirty provenance，不能仅凭commit声称完整运行源码可复现。程序脚本按官方题面作为附件提交，附录提供环境、入口、输入输出与运行说明。
+状态：完成。来源文件：`paper/sections/appendix_A_reproducibility.md`。
+A.1实验设置；A.2正式求解配置；A.3结果生成流程；A.4程序入口与复现方式；A.5输出与评价指标。
+记录配置、源码来源、manifest、数据范围与统计来源链；说明git_dirty provenance，不能仅凭commit声称完整运行源码可复现。已只读核验真实入口，图规模评价预算与VNS筛选区分。程序脚本按官方题面作为附件提交；最终包README信息保留PROGRAM-PACKAGE-TODO，不能以附录说明替代程序交付。
 
-## 附录B 100-case完整结果与补充统计
+## 附录B 逐用例评估结果及补充图
 
+状态：完成。来源文件：`paper/sections/appendix_B_results.md`；三个逐用例CSV各500行，15份按核数拆分的TSV供Word排版，完整性及正式聚合值核验通过。
 分别列P1/P2逐用例Makespan与Added Copy；P3列无L2和共享只读Cache两配置的逐用例Makespan、Added Copy、Cache命中率及比较口径。
 补充图固定为fig1_p1_speedup、fig2_p2_speedup、fig7_vns_gain_dist、fig8_cache_hit_vs_speedup。
 逐用例数据取可核验归档来源，不能声称不可解析merged CSV已经逐行核验。
 
-## 附录C 算法补充与历史探索
+## 附录C 算法补充与SA-VNS探索
 
-来源文件：`paper/sections/appendix_C_algorithm.md`。
+状态：完成。来源文件：`paper/sections/appendix_C_algorithm.md`。
 C.1保留SA-VNS原探索说明、附表C1、Stage 1/Stage 2/Expansion详细结果及原证据注释，全部实验数字原样迁移。
 明确为开发阶段探索后未采用，不作为最终算法贡献，不与正式full100阶段比较混用。正文10.2交叉引用附录C。
 
-## 附录D AI使用与合规记录
+## 附录D AI工具使用说明
 
-按团队真实记录及赛事披露规定整理，不虚构工具信息；内部审计材料不整体复制入论文。
+状态：框架完成，AI具体版本信息待最终核验。来源文件：`paper/sections/appendix_D_ai_usage.md`。
+D.1 AI工具及用途；D.2 AI辅助环节；D.3人工核验和修改；D.4 AI辅助编程与数据分析；D.5最终责任说明。
+按团队真实记录及2026研赛附件4整理，不虚构工具信息或人工签认。未确认字段保留VERIFY-BEFORE-PDF；最终模型、算法选择、结果解释与论文内容由团队确认。附录不能替代分析结果旁和程序前的规定注释。
+
+附录字母与顺序冻结为A配置与复现、B逐用例结果及补充图、C算法补充与SA探索、D AI工具使用说明，不新增其他附录字母。A/B/C完成指内容文件完成，Word排版和实际程序附件仍按最终整稿清单落实。
 
 ## 唯一图表配置与去重
 
