@@ -19,7 +19,7 @@ $$
 - $c_i>0$ 为其计算周期数；
 - $p_i$ 为其执行流水线类型；
 - $\operatorname{Pred}(i)$、$\operatorname{Succ}(i)$ 分别为直接前驱和直接后继集合；
-- $m_i^{\mathrm{in}}$、$m_i^{\mathrm{out}}$ 分别为其输入和输出 tensor 字节数之和。
+- $D_i^{\mathrm{in}}$、$D_i^{\mathrm{out}}$ 分别为其输入和输出 tensor 字节数之和。
 
 对依赖边 $(v_i,v_j)\in E$，记 $d_{ij}\ge 0$ 为该依赖携带的数据字节数。这里的 $d_{ij}$ 既包括输入中直接记录的边数据量，也包括由 tensor 的生产者—消费者关系归并得到的数据量。
 

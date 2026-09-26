@@ -349,7 +349,7 @@ VNS在任一以下条件满足时停止：
 - $h$ 为从各可调度节点穿过非调度节点以恢复依赖时的累计遍历工作量；
 - $B$ 为粗化后的块数；
 - $C$ 为计算核数；
-- $P_g$ 为seed阶段实际构造的候选数，$P_e$ 为该阶段去重后送入官方评价的候选数（包括Baseline、whole及必要的应急whole候选）；
+- $N_g$ 为seed阶段实际构造的候选数，$N_e$ 为该阶段去重后送入官方评价的候选数（包括Baseline、whole及必要的应急whole候选）；
 - $Q$ 为单轮VNS候选池大小，正式full100为48；
 - $K$ 为Top-K大小，正式full100为3；
 - $R$ 为最大VNS轮数，正式full100为32。
@@ -383,10 +383,10 @@ $$
 
 ### 5.8.3 Multi-seed阶段
 
-若实际构造 $P_g$ 个seed候选，其中 $P_e\le P_g$ 个唯一候选进入官方评价，则Multi-seed阶段的上界写为
+若实际构造 $N_g$ 个seed候选，其中 $N_e\le N_g$ 个唯一候选进入官方评价，则Multi-seed阶段的上界写为
 
 $$
-O\!\left(P_g\left(n+m+z+B C\right)+P_eT_{\mathrm{eval}}\right).
+O\!\left(N_g\left(n+m+z+B C\right)+N_eT_{\mathrm{eval}}\right).
 $$
 
 该式包含每个seed的构造与正式评价。实际调用次数还受去重和第6章外部预算限制。
@@ -414,12 +414,12 @@ $$
 $$
 O\!\left(
 n+m+z+h
-+P_gT_{\mathrm{seed}}+P_eT_{\mathrm{eval}}
++N_gT_{\mathrm{seed}}+N_eT_{\mathrm{eval}}
 +R\left(QT_{\mathrm{nbr}}+QT_{\mathrm{est}}+Q\log Q+KT_{\mathrm{eval}}\right)
 \right).
 $$
 
-正式参数下，VNS理论上每轮最多正式评价3个Top-K候选，但总调用数仍受第6章的最大评价次数限制，实际不超过 $P_e+RK$，并可能因去重、候选不足或提前停止而更少。由于 $T_{\mathrm{eval}}$ 取决于官方执行模拟和具体图结构，本文不猜测其内部复杂度。
+正式参数下，VNS理论上每轮最多正式评价3个Top-K候选，但总调用数仍受第6章的最大评价次数限制，实际不超过 $N_e+RK$，并可能因去重、候选不足或提前停止而更少。由于 $T_{\mathrm{eval}}$ 取决于官方执行模拟和具体图结构，本文不猜测其内部复杂度。
 
 上述分析说明算法通过有界portfolio、有界邻域池、Top-K和预算控制正式评价次数；它不意味着算法在多项式时间内保证最优，也不提供全局最优证明。
 
