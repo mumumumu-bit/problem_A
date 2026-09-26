@@ -1,6 +1,6 @@
 # 5 Multi-seed + VNS求解算法
 
-本章在第4章统一方案表示和字典序目标的基础上，说明正式stable solver如何构造初始方案、形成多样化候选、调用官方 Evaluator，并通过变邻域搜索持续维护best-so-far方案。算法的核心思想是：先用多种图粗化与核分配策略覆盖不同结构偏好，再在正式评价得到的incumbent附近进行受限局部搜索。经典ready-list/HEFT与VNS背景需要外部文献支持的位置暂记为 `[CITATION-NEEDED]`。
+本章在第4章统一方案表示和字典序目标的基础上，说明正式stable solver如何构造初始方案、形成多样化候选、调用官方 Evaluator，并通过变邻域搜索持续维护best-so-far方案。算法的核心思想是：先用多种图粗化与核分配策略覆盖不同结构偏好，再在正式评价得到的incumbent附近进行受限局部搜索。核分配借鉴HEFT类列表调度思想，采用HEFT-style实现[3]；变邻域搜索（Variable Neighborhood Search，VNS）的基本思想是在局部搜索中系统切换邻域结构[4]。本文的8类邻域、strict descent、adaptive机制及候选筛选规则属于本文具体设计。
 
 <!-- Evidence: paper/EVIDENCE_MAP.md C；src/npu_scheduler/partition/initial_partition.py；src/npu_scheduler/search/vns.py -->
 
@@ -11,9 +11,9 @@
 1. **图特征预计算**：校验原始图，移除显式COPY节点以形成可调度DAG，恢复tensor生产者—消费者依赖，计算拓扑序、路径长度、关键节点、连通分量、边数据量和流水线工作量。
 2. **Baseline构造**：用中间粒度的balanced粗化产生一个基础划分，再进行balanced核分配，得到阶段比较基准。
 3. **Multi-seed候选生成**：构造whole候选以及balanced、affinity、critical、pipe四类主要seed family在多个grain下的候选；正式full100还包含fine-grain=2变体。
-4. **核分配**：每个粗化结果通过受HEFT启发的ready-list调度映射到多个计算核，形成全局块序与各核执行序列。[CITATION-NEEDED]
+4. **核分配**：每个粗化结果通过HEFT-style的ready-list调度映射到多个计算核，形成全局块序与各核执行序列。
 5. **Multi-seed正式评价**：对未重复且预算允许的seed候选逐个调用官方 Evaluator，以字典序目标更新incumbent，并记录Baseline和Multi-seed阶段快照。
-6. **VNS候选生成与初筛**：围绕当前incumbent，从8类邻域中的一个生成有界候选池；先由启发式估计器排序，再取Top-K送入官方 Evaluator。[CITATION-NEEDED]
+6. **VNS候选生成与初筛**：围绕当前incumbent，从8类邻域中的一个生成有界候选池；先由启发式估计器排序，再取Top-K送入官方 Evaluator。
 7. **严格下降更新**：只有官方Evaluation在字典序上严格优于当前值时才接受候选并更新incumbent。
 8. **adaptive选择与停止**：根据邻域历史尝试次数、成功次数和Makespan收益选择后续邻域；达到轮数、预算、停滞或有效邻域耗尽条件时停止。
 9. **输出**：返回最终incumbent、正式Evaluation、三个阶段快照及邻域统计。
@@ -101,7 +101,7 @@ $$
 
 其中，$w_b$ 为块工作量，$D_{bd}$ 为块间数据字节数，$B_w$ 为配置带宽。块按较大的 $r_b$ 优先进入ready-list；每个块选择预计完成时间较小的核。
 
-该式只用于启发式核分配顺序和估计，不替代官方Makespan。critical family的真实含义是“关键路径优先粗化 + 上行rank驱动的最早完成式分配”。其ready-list思想受HEFT启发。[CITATION-NEEDED]
+该式只用于启发式核分配顺序和估计，不替代官方Makespan。critical family的真实含义是“关键路径优先粗化 + 上行rank驱动的最早完成式分配”。其ready-list思想借鉴本章开头所述HEFT类列表调度思想。
 
 ### 5.3.5 pipe family
 
@@ -156,7 +156,7 @@ $$
 =\max\{A_k+\mathbf{1}[A_k>0]\Delta_{\mathrm{same}},R_{bk}\}+w_b,
 $$
 
-其中 $A_k$ 为核 $k$ 的当前可用时刻；当核尚未安排块时，同核等待项不加入。不同family再按5.3节所述加入复用奖励或 `PIPE_M`/`PIPE_V` 投影最大负载项，选择评分最小的核。该过程属于受HEFT启发的ready-list调度，而非标准HEFT的逐字复现。[CITATION-NEEDED]
+其中 $A_k$ 为核 $k$ 的当前可用时刻；当核尚未安排块时，同核等待项不加入。不同family再按5.3节所述加入复用奖励或 `PIPE_M`/`PIPE_V` 投影最大负载项，选择评分最小的核。该过程属于HEFT-style的ready-list调度，而非标准HEFT的逐字复现。
 
 ### 5.4.3 启发式候选排序
 
